@@ -74,6 +74,7 @@ void setup() {
 
 int rainVal, tempVal, lightVal;
 bool isRaining = false;
+bool isNight = false;
 void loop() {
   // read the rain sensor
   rainVal = analogRead(pinRainSensor);
@@ -130,13 +131,28 @@ void loop() {
   u8g2.drawStr(40,10,buf);	// write something to the internal memory
   u8g2.drawStr(60,10,"C"); // temp unit
 
+  if (lightVal>100) {
+    isNight = false;
+  } else {
+    isNight = true;
+  }
 
   // say if it is raining or not
   if (isRaining) {
-    u8g2.drawStr(0,40,"It is raining :-(");
+    if (!isNight) {
+      // TODO: Detect a raise in brightness and if the rain sensor is a steady or declining value, the weather has changed from rain to clear/sunny.
+
+    }
+    u8g2.drawStr(0,20,"It is raining :-(");
   } else {
-    u8g2.drawStr(0,40,"It is not raining :-)");
+    u8g2.drawStr(0,20,"It is not raining :-)");
   }
+
+  // light sensor line
+  
+  char bufLight[32];
+  sprintf(bufLight, "Light Sensor: %d", lightVal);
+  u8g2.drawStr(0,40,bufLight);
 
   u8g2.sendBuffer();					// transfer internal memory to the display
   delay(1000);  
