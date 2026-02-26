@@ -1,20 +1,21 @@
 /*
   Program Name: IoT Project 1
   Date: 24th February 2026
+  modified by Arif on 26th February 2026
   Purpose: Rain detector with alerts for start / stop.
 */
 
 const int pinRainSensor = A0;
-//const int pinTempSensor = D2;
+const int pinTempSensor = D2;
 const int pinLightSensor = A1;
 const int pinLED = D4;
 const int pinButton = D8;
 
 // Needed for Temp sensor
-#include "DHT.h"
-#define DHTPIN 2     // what pin we're connected to
-#define DHTTYPE DHT11   // DHT 11 
-DHT dht(DHTPIN, DHTTYPE);
+//#include "DHT.h"
+//#define DHTPIN 2     // what pin we're connected to
+//#define DHTTYPE DHT11   // DHT 11 
+//DHT dht(DHTPIN, DHTTYPE);
 
 void setup() {
   // init the serial port
@@ -23,12 +24,12 @@ void setup() {
 
   // set pin modes
   pinMode(pinRainSensor, INPUT);
-  //pinMode(pinTempSensor, INPUT);
+  pinMode(pinTempSensor, INPUT);
   pinMode(pinLightSensor, INPUT);
-  pinMode(pinLED, OUTPUT);
   pinMode(pinButton, INPUT);
+  pinMode(pinLED, OUTPUT);
 
-  // init the temp sensor
+  // initiate the temp sensor
   dht.begin();
 
   Serial.println("Setup finished");
@@ -42,7 +43,7 @@ void loop() {
   Serial.println(rainVal);
 
   // read the temp sensor
-  tempVal = dht.readTemperature();
+  tempVal = analogRead(pinTempSensor);
   Serial.print("Temp: ");
   Serial.print(tempVal);
   Serial.println("C");
