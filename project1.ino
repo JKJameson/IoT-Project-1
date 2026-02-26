@@ -4,18 +4,15 @@
   modified by Arif on 26th February 2026
   Purpose: Rain detector with alerts for start / stop.
 */
+#include <math.h>
 
-const int pinRainSensor = A0;
-const int pinTempSensor = D2;
+const int B = 4275000;            // B value of the thermistor
+const int R0 = 100000;   
+const int pinRainSensor = A3;
+const int pinTempSensor = A0;
 const int pinLightSensor = A1;
 const int pinLED = D4;
 const int pinButton = D8;
-
-// Needed for Temp sensor
-//#include "DHT.h"
-//#define DHTPIN 2     // what pin we're connected to
-//#define DHTTYPE DHT11   // DHT 11 
-//DHT dht(DHTPIN, DHTTYPE);
 
 void setup() {
   // init the serial port
@@ -30,7 +27,6 @@ void setup() {
   pinMode(pinLED, OUTPUT);
 
   // initiate the temp sensor
-  dht.begin();
 
   Serial.println("Setup finished");
 }
@@ -44,8 +40,13 @@ void loop() {
 
   // read the temp sensor
   tempVal = analogRead(pinTempSensor);
+  float R = 1023.0/tempVal-1.0;
+    R = R0*R;
+
+    float temperature = 1.0/(log(R/R0)/B+1/298.15)-273.15; // convert to temperature via datasheet
+  
   Serial.print("Temp: ");
-  Serial.print(tempVal);
+  Serial.print(temperature);
   Serial.println("C");
 
   // read the light sensor
