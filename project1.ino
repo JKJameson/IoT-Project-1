@@ -6,7 +6,7 @@
 */
 #include <math.h>
 
-const int B = 4275000;            // B value of the thermistor
+const int B = 3950;            // B value of the thermistor
 const int R0 = 100000;   
 const int pinRainSensor = A3;
 const int pinTempSensor = A0;
