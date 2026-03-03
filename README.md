@@ -8,7 +8,7 @@ We originally assumed the rain sensor would show a value of 0-255 depending on h
 Upon testing, we discovered that the sensor has the following values.
 
 | Moisture | Sensor Reading Day 1 | Sensor Reading Day 2 |
-|---------|----------|
+|---------|----------|----------|
 | Dry| 316 | 1000 |
 | A few drops of water| 60 | 34 |
 | Completely saturated | 33 | 34 |
