@@ -28,3 +28,7 @@ Day 2 testing gave us a higher base reading for when the sensor was dry (1000 re
 # IoT Project 1
 ![Video](WhatsApp%20Video%202026-03-02%20at%202.31.46%20PM%20(1).mp4)
 ![Video](WhatsApp%20Video%202026-03-02%20at%202.31.46%20PM.mp4)
+
+Testing carried out on Tuesday 3rd March 2026
+Finding on project
+Loop was slower to output readings without OLED connected to arduino
