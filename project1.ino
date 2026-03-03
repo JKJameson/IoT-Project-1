@@ -54,6 +54,7 @@ const int pinTempSensor = A0;
 const int pinLightSensor = A1;
 const int pinLED = D4;
 const int pinButton = D8;
+const int RAIN_SENSOR_MIN = 600;
 
 void setup() {
   // init the serial port
@@ -103,7 +104,7 @@ void loop() {
   }
 
   // is it raining?
-  if (rainVal<75) {
+  if (rainVal<RAIN_SENSOR_MIN) {
     isRaining = true;
   } else {
     isRaining = false;
@@ -117,7 +118,6 @@ void loop() {
     digitalWrite(pinLED, LOW);
   }
 
-  delay(500);
   Serial.println("=================");
 
   u8g2.clearBuffer();					// clear the internal memory
@@ -155,5 +155,5 @@ void loop() {
   u8g2.drawStr(0,40,bufLight);
 
   u8g2.sendBuffer();					// transfer internal memory to the display
-  delay(1000);  
+  delay(100);  
 }
