@@ -32,3 +32,13 @@ Day 2 testing gave us a higher base reading for when the sensor was dry (1000 re
 Testing carried out on Tuesday 3rd March 2026
 Finding on project
 Loop was slower to output readings without OLED connected to arduino
+
+Security Concerns
+Over the course of the project we deduced that during the transmission of data from the rain sensor to the user's phone there could be the risk of fabrication of data. An individual with plans of stealing rain sensor data and sending in false reports could break into the system.
+A possible solution that we came up with was data encryption (HTTP to HTTPS) to name an example. By doing this we could prevent man in the middle attacks as well as interception.
+We could also create anomaly detecting code to detect abnormal changes in the readings for example sudden spikes in temperature reading. This could be done by adding a range validator that would reject fictitious readings (temperatures of over 200 degrees).
+We could also include timestamps when sending over data to prevent attackers from sending over once validated readings.
+A lesser security threat could be simple eavesdropping whereby attackers do not tamper with data but monitor and record it. This could allow attackers to pinpoint end users' locations and sell that information. This can be prevented as simply as using a secure Wi-Fi connection such as a WPA3 connection with a strong password. This problem can also be solved through end to end encryption in the Arduino IDE code. Such an example being;
+Encrypted_Data = AES(data, device_secret_key)
+Send(Encrypted_Data)
+There could also arise the problem of route hijacking whereby data is diverted to other unknown ends. This could be handled by using VPN tunnels instead of relying on open routing. This would ensure that data is protected even though routing changes.
