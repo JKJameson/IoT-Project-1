@@ -137,22 +137,27 @@ void loop() {
     isNight = true;
   }
 
+  // light sensor line on OLED
+  char bufLight[32];
+  sprintf(bufLight, "Light Sensor: %d", lightVal);
+  u8g2.drawStr(0,25,bufLight);
+
   // say if it is raining or not
   if (isRaining) {
     if (!isNight) {
       // TODO: Detect a raise in brightness and if the rain sensor is a steady or declining value, the weather has changed from rain to clear/sunny.
 
     }
-    u8g2.drawStr(0,20,"It is raining :-(");
+    u8g2.drawStr(0,40,"Status: Raining :-(");
   } else {
-    u8g2.drawStr(0,20,"It is not raining :-)");
+    u8g2.drawStr(0,40,"Status: Dry     :-)");
   }
 
-  // light sensor line
-  
-  char bufLight[32];
-  sprintf(bufLight, "Light Sensor: %d", lightVal);
-  u8g2.drawStr(0,40,bufLight);
+  if (isNight) {
+    u8g2.drawStr(0,55,"Mode: Night");
+  } else {
+    u8g2.drawStr(0,55,"Node: Day");
+  }
 
   u8g2.sendBuffer();					// transfer internal memory to the display
   delay(100);  
