@@ -156,7 +156,7 @@ void loop() {
   if (isNight) {
     u8g2.drawStr(0,55,"Mode: Night");
   } else {
-    u8g2.drawStr(0,55,"Node: Day");
+    u8g2.drawStr(0,55,"Mode: Day");
   }
 
   u8g2.sendBuffer();					// transfer internal memory to the display
