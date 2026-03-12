@@ -38,6 +38,10 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 
+#include <WiFiS3.h>
+/*Add the start of wifi fuctionality
+So we can send messages and store data*/
+
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
 #endif
@@ -61,6 +65,13 @@ void setup() {
   Serial.begin(9600);
   Serial.println("Setup starting...");
 
+  //Wifi
+   WiFi.begin(ssid, pass);
+   while (WiFi.status() != WL_CONNECTED)
+  {
+    delay (1000);
+    Serial.println("Connecting....");
+  }
   // set pin modes
   pinMode(pinRainSensor, INPUT);
   pinMode(pinTempSensor, INPUT);
@@ -69,7 +80,10 @@ void setup() {
   pinMode(pinLED, OUTPUT);
 
   u8g2.begin();
-
+  //Wifi
+  Serial.println("Connected");
+  Serial.println(WiFi.localIP());
+  
   Serial.println("Setup finished");
 }
 
