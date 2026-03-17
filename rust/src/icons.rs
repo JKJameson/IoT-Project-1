@@ -1,0 +1,75 @@
+/// 1bpp icon definitions.
+///
+/// Format: packed bytes, MSB = leftmost pixel, 1 = black, 0 = white.
+/// Each row is `ceil(width / 8)` bytes, rows are top-to-bottom.
+///
+/// To generate from a PNG, run:
+///   python3 tools/png_to_icon.py path/to/icon.png
+///
+/// The script prints a ready-to-paste Rust const.
+
+// ── 16x16 WiFi icon ─────────────────────────────────────────────────────────
+pub const WIFI_W: u16 = 16;
+pub const WIFI_H: u16 = 16;
+pub const WIFI: [u8; 32] = [
+    0x00, 0x00, //  0
+    0x00, 0x00, //  1
+    0x07, 0xE0, //  2
+    0x1F, 0xF8, //  3
+    0x3C, 0x3E, //  4
+    0xF0, 0x0F, //  5
+    0xC3, 0xE3, //  6
+    0x0F, 0xF0, //  7
+    0x1E, 0x38, //  8
+    0x18, 0x18, //  9
+    0x00, 0x80, // 10
+    0x03, 0xC0, // 11
+    0x03, 0xC0, // 12
+    0x01, 0x80, // 13
+    0x00, 0x00, // 14
+    0x00, 0x00, // 15
+];
+
+// ── 16x16 Bell icon ──────────────────────────────────────────────────────────
+pub const BELL_W: u16 = 16;
+pub const BELL_H: u16 = 16;
+pub const BELL: [u8; 32] = [
+    0x00, 0x00, //  0
+    0x03, 0xC0, //  1
+    0x0C, 0x30, //  2
+    0x08, 0x10, //  3
+    0x10, 0x08, //  4
+    0x10, 0x08, //  5
+    0x10, 0x08, //  6
+    0x10, 0x08, //  7
+    0x10, 0x08, //  8
+    0x10, 0x08, //  9
+    0x10, 0x08, // 10
+    0x20, 0x04, // 11
+    0x3F, 0xFC, // 12
+    0x02, 0x40, // 13
+    0x01, 0x80, // 14
+    0x00, 0x00, // 15
+];
+
+// ── 16x16 Checkmark icon ─────────────────────────────────────────────────────
+pub const CHECK_W: u16 = 16;
+pub const CHECK_H: u16 = 16;
+pub const CHECK: [u8; 32] = [
+    0x00, 0x00, //  0
+    0x00, 0x00, //  1
+    0x00, 0x00, //  2
+    0x00, 0x0C, //  3
+    0x00, 0x1C, //  4
+    0x00, 0x3C, //  5
+    0x00, 0x78, //  6
+    0x30, 0xF0, //  7
+    0x39, 0xE0, //  8
+    0x3F, 0xC0, //  9
+    0x1F, 0x80, // 10
+    0x0F, 0x00, // 11
+    0x06, 0x00, // 12
+    0x00, 0x00, // 13
+    0x00, 0x00, // 14
+    0x00, 0x00, // 15
+];
