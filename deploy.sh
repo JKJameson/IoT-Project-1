@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-PI="josh@pi1"
+PI="josh@192.168.0.18"
 REMOTE="/home/josh/iot1"
 
 echo "==> Syncing source to ${PI}:${REMOTE} ..."
