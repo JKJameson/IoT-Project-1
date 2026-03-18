@@ -42,7 +42,6 @@ pub const EPD_BUF_SIZE: usize = ((EPD_WIDTH as usize + 7) / 8) * EPD_HEIGHT as u
 extern "C" {
     pub fn EPD_2in13_V4_Init();
     pub fn EPD_2in13_V4_Init_Fast();
-    pub fn EPD_2in13_V4_Init_GUI();
     pub fn EPD_2in13_V4_Clear();
     pub fn EPD_2in13_V4_Clear_Black();
     pub fn EPD_2in13_V4_Display(image: *mut UByte);

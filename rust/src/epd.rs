@@ -117,6 +117,21 @@ impl Epd {
         }
     }
 
+    /// Set the base image for partial updates. Call once after the initial full draw.
+    pub fn display_base(&mut self) {
+        unsafe { ffi::EPD_2in13_V4_Display_Base(self.buf.as_mut_ptr()) };
+    }
+
+/// Push only changed pixels to the display. Fast, no full-screen flicker.
+    pub fn display_partial(&mut self) {
+        unsafe { ffi::EPD_2in13_V4_Display_Partial(self.buf.as_mut_ptr()) };
+    }
+
+    /// Clear a rectangular region of the image buffer to a solid color.
+    pub fn clear_window(&mut self, x0: u16, y0: u16, x1: u16, y1: u16, color: u16) {
+        unsafe { ffi::Paint_ClearWindows(x0, y0, x1, y1, color) };
+    }
+
     /// Put the display into deep sleep. Always call this before power-off.
     pub fn sleep(&self) {
         unsafe { ffi::EPD_2in13_V4_Sleep() };
