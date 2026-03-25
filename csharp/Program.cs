@@ -7,7 +7,7 @@ class Program {
 
         display.Fill(WHITE);
         display.DrawIcon(4, 4, Icons.Bell, Icons.BellW, Icons.BellH);
-        display.DrawText(24, 6, "Notifications", Font.F16, BLACK, WHITE);
+        display.DrawText(24, 6, "Loading...", Font.F16, BLACK, WHITE);
         display.DrawIcon(4, 30, Icons.Check, Icons.CheckW, Icons.CheckH);
         display.DrawText(24, 34, "System OK", Font.F12, BLACK, WHITE);
         display.DrawLine(0, 52, 249, 52, BLACK);
@@ -32,12 +32,16 @@ class Program {
                 line = "-- sensor error --";
             }
 
+            display.ClearWindow(24, 6, 24 + SensorW, 6 + 16, WHITE);
+            display.DrawText(24, 6, string.Format("{0:HH:mm tt}", DateTime.Now), Font.F16, BLACK, WHITE);
+
             display.ClearWindow(SensorX, SensorY, SensorX + SensorW, SensorY + SensorH, WHITE);
             display.DrawText(SensorX, SensorY, line, Font.F12, BLACK, WHITE);
+
             display.DisplayPartial();
 
             Console.WriteLine(line);
-            Thread.Sleep(TimeSpan.FromSeconds(5));
+            Thread.Sleep(TimeSpan.FromSeconds(1));
         }
     }
 }

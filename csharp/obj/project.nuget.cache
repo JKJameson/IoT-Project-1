@@ -1,12 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "Ao533UySv1k=",
+  "dgSpecHash": "+Tp35NjdPY8=",
   "success": true,
   "projectFilePath": "/Users/josh/Dev/iot-project-1/csharp/EpdApp.csproj",
   "expectedPackageFiles": [
+    "/Users/josh/.nuget/packages/microsoft.net.illink.tasks/8.0.25/microsoft.net.illink.tasks.8.0.25.nupkg.sha512",
     "/Users/josh/.nuget/packages/microsoft.netcore.app.ref/8.0.25/microsoft.netcore.app.ref.8.0.25.nupkg.sha512",
+    "/Users/josh/.nuget/packages/microsoft.netcore.app.runtime.linux-arm64/8.0.25/microsoft.netcore.app.runtime.linux-arm64.8.0.25.nupkg.sha512",
     "/Users/josh/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.25/microsoft.aspnetcore.app.ref.8.0.25.nupkg.sha512",
-    "/Users/josh/.nuget/packages/microsoft.netcore.app.host.osx-arm64/8.0.25/microsoft.netcore.app.host.osx-arm64.8.0.25.nupkg.sha512"
+    "/Users/josh/.nuget/packages/microsoft.aspnetcore.app.runtime.linux-arm64/8.0.25/microsoft.aspnetcore.app.runtime.linux-arm64.8.0.25.nupkg.sha512",
+    "/Users/josh/.nuget/packages/microsoft.netcore.app.host.linux-arm64/8.0.25/microsoft.netcore.app.host.linux-arm64.8.0.25.nupkg.sha512"
   ],
   "logs": []
 }
