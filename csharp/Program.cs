@@ -28,7 +28,7 @@ class Program {
         Console.WriteLine("Setting base frame...");
         display.DisplayBase();
 
-        const ushort SensorX = 4, SensorY = 58, SensorW = 244, SensorH = 14;
+        const ushort line3X = 4, line3Y = 58, screenW = 244, screenH = 14;
         Dht11.Reading dht11Reading;
         float tempC, humidity;
         string line3;
@@ -52,8 +52,8 @@ class Program {
             display.ClearWindow(24, 6, 24 + SensorW, 6 + 16, WHITE);
             display.DrawText(24, 6, string.Format("{0:HH:mm tt}", DateTime.Now), Font.F16, BLACK, WHITE);
 
-            display.ClearWindow(SensorX, SensorY, SensorX + SensorW, SensorY + SensorH, WHITE);
-            display.DrawText(SensorX, SensorY, line3, Font.F12, BLACK, WHITE);
+            display.ClearWindow(line3X, line3Y, line3X + screenW, line3Y + screenH, WHITE);
+            display.DrawText(line3X, line3Y, line3, Font.F12, BLACK, WHITE);
 
             display.DisplayPartial();
 
@@ -63,4 +63,3 @@ class Program {
             Thread.Sleep(TimeSpan.FromSeconds(1));
         }
     }
-}
