@@ -17,7 +17,7 @@ class Program {
         display.DrawIcon(4, 30, Icons.Check, Icons.CheckW, Icons.CheckH);
 
         // write "System OK"
-        display.DrawText(24, 34, "System OK", Font.F12, BLACK, WHITE);
+        display.DrawText(24, 34, "System OK - test1", Font.F12, BLACK, WHITE);
 
         // draw a horizontal line
         display.DrawLine(0, 52, 249, 52, BLACK);
@@ -49,7 +49,7 @@ class Program {
                 line3 = "-- sensor error --";
             }
 
-            display.ClearWindow(24, 6, 24 + SensorW, 6 + 16, WHITE);
+            display.ClearWindow(24, 6, 24 + screenW, 6 + 16, WHITE);
             display.DrawText(24, 6, string.Format("{0:HH:mm tt}", DateTime.Now), Font.F16, BLACK, WHITE);
 
             display.ClearWindow(line3X, line3Y, line3X + screenW, line3Y + screenH, WHITE);
@@ -63,3 +63,4 @@ class Program {
             Thread.Sleep(TimeSpan.FromSeconds(1));
         }
     }
+}
