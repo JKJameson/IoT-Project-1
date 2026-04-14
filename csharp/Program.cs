@@ -43,8 +43,8 @@ class Program {
                 tempC = dht11Reading.TemperatureC;
                 humidity = dht11Reading.Humidity;
                 
-                line3 = $"{tempC}C";
-                line4 = $"{humidity}% RH";
+                line3 = $"Temperature: {tempC}C";
+                line4 = $"Humidity: {humidity}% RH";
             }
             catch (Exception e)
             {
