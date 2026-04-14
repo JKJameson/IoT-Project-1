@@ -5,6 +5,8 @@ class Program {
         Console.WriteLine("Initialising display...");
         using var display = new Epd();
 
+        // test
+
         display.Fill(WHITE);
 
         // draw bell icon
