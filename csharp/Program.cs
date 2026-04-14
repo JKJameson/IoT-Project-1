@@ -30,7 +30,7 @@ class Program {
         Console.WriteLine("Setting base frame...");
         display.DisplayBase();
 
-        const ushort line3X = 4, line3Y = 58,line4X = 5,line4Y = 68, screenW = 244, screenH = 14;
+        const ushort line3X = 4, line3Y = 58,line4X = 4,line4Y = 68, screenW = 244, screenH = 14;
         Dht11.Reading dht11Reading;
         float tempC, humidity;
         string line3, line4;
