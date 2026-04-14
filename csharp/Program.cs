@@ -24,13 +24,13 @@ class Program {
         // draw a horizontal line
         display.DrawLine(0, 52, 249, 52, BLACK);
 
-        // draw a rectangle around the edge of the screen
-        display.DrawRect(2, 2, 248, 120, BLACK, filled: false);
+        /*// draw a rectangle around the edge of the screen
+        display.DrawRect(2, 2, 248, 120, BLACK, filled: false);*/
 
         Console.WriteLine("Setting base frame...");
         display.DisplayBase();
 
-        const ushort line3X = 15, line3Y = 58,line4X = 15,line4Y = 68, screenW = 244, screenH = 14;
+        const ushort line3X = 0, line3Y = 58,line4X = 0,line4Y = 68, screenW = 244, screenH = 14;
         Dht11.Reading dht11Reading;
         float tempC, humidity;
         string line3, line4;
