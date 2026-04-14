@@ -5,7 +5,7 @@ class Program {
         Console.WriteLine("Initialising display...");
         using var display = new Epd();
 
-        // test3
+        // test4
 
         display.Fill(WHITE);
 
@@ -19,7 +19,7 @@ class Program {
         display.DrawIcon(4, 30, Icons.Check, Icons.CheckW, Icons.CheckH);
 
         // write "System OK"
-        display.DrawText(24, 34, "System OK - test3", Font.F12, BLACK, WHITE);
+        display.DrawText(24, 34, "System OK - test4", Font.F12, BLACK, WHITE);
 
         // draw a horizontal line
         display.DrawLine(0, 52, 249, 52, BLACK);
