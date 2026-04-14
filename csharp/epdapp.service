@@ -1,0 +1,14 @@
+[Unit]
+Description=EPD IoT Display App
+After=default.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/sleep 30
+ExecStart=/home/josh/iot1/csharp/EpdApp
+Environment=LD_LIBRARY_PATH=/home/josh/iot1/c
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

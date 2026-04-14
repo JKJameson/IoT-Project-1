@@ -2,12 +2,6 @@ using static Ffi;
 
 class Program {
     static void Main() {
-        var cts = new CancellationTokenSource();
-        Console.CancelKeyPress += (_, e) => {
-            e.Cancel = true;
-            cts.Cancel();
-        };
-
         Console.WriteLine("Initialising display...");
         using var display = new Epd();
 
@@ -39,7 +33,7 @@ class Program {
         float tempC, humidity;
         string line3;
 
-        while (!cts.Token.IsCancellationRequested)
+        while (true)
         {
             try
             {
@@ -64,7 +58,9 @@ class Program {
             display.DisplayPartial();
 
             Console.WriteLine(line3);
-            cts.Token.WaitHandle.WaitOne(TimeSpan.FromSeconds(1));
+            
+            // sleep for 1 second
+            Thread.Sleep(TimeSpan.FromSeconds(1));
         }
     }
 }
