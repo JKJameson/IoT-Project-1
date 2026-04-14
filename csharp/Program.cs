@@ -63,4 +63,3 @@ class Program {
             Thread.Sleep(TimeSpan.FromSeconds(1));
         }
     }
-}
