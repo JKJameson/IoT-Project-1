@@ -12,6 +12,7 @@ dotnet publish /Users/josh/Dev/iot-project-1/csharp/EpdApp.csproj \
   --nologo -v quiet
 
 echo "==> Deploying binary to Pi ..."
+ssh "$PI" "systemctl --user stop epdapp.service 2>/dev/null || true"
 rsync -az --progress /Users/josh/Dev/iot-project-1/csharp/bin/pi/EpdApp "${PI}:${REMOTE}/csharp/EpdApp.tmp"
 ssh "$PI" "mv -f ${REMOTE}/csharp/EpdApp.tmp ${REMOTE}/csharp/EpdApp"
 

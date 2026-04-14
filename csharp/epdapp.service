@@ -4,7 +4,7 @@ After=default.target
 
 [Service]
 Type=simple
-ExecStartPre=/usr/bin/sleep 30
+ExecStartPre=/bin/bash -c 'if [ "$(cat /proc/uptime | cut -d. -f1)" -lt 60 ]; then sleep 30; fi'
 ExecStart=/home/josh/iot1/csharp/EpdApp
 Environment=LD_LIBRARY_PATH=/home/josh/iot1/c
 Restart=on-failure

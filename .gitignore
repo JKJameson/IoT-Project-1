@@ -1,2 +1,5 @@
 csharp/bin/
 csharp/obj/
+EpdApp*
+project.*
+
