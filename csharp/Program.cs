@@ -2,6 +2,12 @@ using static Ffi;
 
 class Program {
     static void Main() {
+        var cts = new CancellationTokenSource();
+        Console.CancelKeyPress += (_, e) => {
+            e.Cancel = true;
+            cts.Cancel();
+        };
+
         Console.WriteLine("Initialising display...");
         using var display = new Epd();
 
@@ -18,7 +24,7 @@ class Program {
 
         const ushort SensorX = 4, SensorY = 58, SensorW = 244, SensorH = 14;
 
-        while (true)
+        while (!cts.Token.IsCancellationRequested)
         {
             string line;
             try
@@ -41,7 +47,7 @@ class Program {
             display.DisplayPartial();
 
             Console.WriteLine(line);
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            cts.Token.WaitHandle.WaitOne(TimeSpan.FromSeconds(1));
         }
     }
 }
