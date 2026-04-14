@@ -1,26 +1,31 @@
 {
   "format": 1,
   "restore": {
-    "/Users/josh/Dev/iot-project-1/csharp/EpdApp.csproj": {}
+    "C:\\Users\\Lenovo T14\\OneDrive - Atlantic TU\\Year 1\\Semester 2\\Internet of things\\Project\\IoT-Project-1\\csharp\\EpdApp.csproj": {}
   },
   "projects": {
-    "/Users/josh/Dev/iot-project-1/csharp/EpdApp.csproj": {
+    "C:\\Users\\Lenovo T14\\OneDrive - Atlantic TU\\Year 1\\Semester 2\\Internet of things\\Project\\IoT-Project-1\\csharp\\EpdApp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/josh/Dev/iot-project-1/csharp/EpdApp.csproj",
+        "projectUniqueName": "C:\\Users\\Lenovo T14\\OneDrive - Atlantic TU\\Year 1\\Semester 2\\Internet of things\\Project\\IoT-Project-1\\csharp\\EpdApp.csproj",
         "projectName": "EpdApp",
-        "projectPath": "/Users/josh/Dev/iot-project-1/csharp/EpdApp.csproj",
-        "packagesPath": "/Users/josh/.nuget/packages/",
-        "outputPath": "/Users/josh/Dev/iot-project-1/csharp/obj/",
+        "projectPath": "C:\\Users\\Lenovo T14\\OneDrive - Atlantic TU\\Year 1\\Semester 2\\Internet of things\\Project\\IoT-Project-1\\csharp\\EpdApp.csproj",
+        "packagesPath": "C:\\Users\\Lenovo T14\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Lenovo T14\\OneDrive - Atlantic TU\\Year 1\\Semester 2\\Internet of things\\Project\\IoT-Project-1\\csharp\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "/Users/josh/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\Lenovo T14\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "/opt/homebrew/Cellar/dotnet/10.0.105/libexec/library-packs": {},
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -39,19 +44,11 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.100"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
-          "dependencies": {
-            "Microsoft.NET.ILLink.Tasks": {
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[8.0.25, )",
-              "autoReferenced": true
-            }
-          },
           "imports": [
             "net461",
             "net462",
@@ -63,39 +60,12 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.25, 8.0.25]"
-            },
-            {
-              "name": "Microsoft.AspNetCore.App.Runtime.linux-arm64",
-              "version": "[8.0.25, 8.0.25]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Host.linux-arm64",
-              "version": "[8.0.25, 8.0.25]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.25, 8.0.25]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Runtime.linux-arm64",
-              "version": "[8.0.25, 8.0.25]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/opt/homebrew/Cellar/dotnet/10.0.105/libexec/sdk/10.0.105/PortableRuntimeIdentifierGraph.json"
-        }
-      },
-      "runtimes": {
-        "linux-arm64": {
-          "#import": []
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
