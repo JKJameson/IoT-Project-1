@@ -5,7 +5,7 @@ class Program {
         Console.WriteLine("Initialising display...");
         using var display = new Epd();
 
-        // test4
+        // test5
 
         display.Fill(WHITE);
 
