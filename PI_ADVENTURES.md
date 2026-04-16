@@ -60,6 +60,9 @@ Now that I have the C libraries installed for the e-ink display, my language of 
 Rust has quickly become the favourite programing language of many developers over the past few years. It is said to be as fast as C++ (kornel, 2026 https://kornel.ski/rust-c-speed) but with extra memory safety and a LOT of libraries (known as cargo packages) ready to use.
 It is a quick way to develop a low level, high performance application without doing too much of the low-level coding typically needed with such an undertaking.
 
+# Language change
+We change our language from rust to C# because rust was too complicated and we are doing C# in our Course.
+In the beginning the C# code was crashing for the project because we were connecting our Pi to the USB of hotspot router and it was draining power so we just attach it directly to the problem was solved
 # AI Disclaimer
 I used Claude Code to generate the boilerplate code conversion from the example C library provided by WaveShare to Rust code.
 This provides us with a working example written in Rust, ready to be adapted for our project.
