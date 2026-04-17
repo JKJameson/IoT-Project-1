@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EpdApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5f2cde31c680071d87b6a8ef85bf3f8fc4506f9a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+38ff566d6797492cf990bd8e6813170391d73feb")]
 [assembly: System.Reflection.AssemblyProductAttribute("EpdApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EpdApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
