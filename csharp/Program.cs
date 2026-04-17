@@ -52,11 +52,12 @@ class Program {
         display.DrawText(24, 6, "", Font.F16, BLACK, WHITE);
         display.DisplayBase();
 
-        const ushort line3X = 0, line3Y = 56;
-        const ushort line4X = 0, line4Y = 72;
-        const ushort line5X = 0, line5Y = 88;
-        const ushort line6X = 0, line6Y = 104;
-        const ushort screenW = 244, screenH = 14;
+        const ushort iconX = 0, textX = 20;
+        const ushort line3Y = 56;
+        const ushort line4Y = 72;
+        const ushort line5Y = 88;
+        const ushort line6Y = 104;
+        const ushort screenW = 244, screenH = 16;
         Dht11.Reading dht11Reading;
         float tempC, humidity;
         string line3, line4, line5, line6;
@@ -108,14 +109,21 @@ class Program {
             display.ClearWindow(24, 6, 24 + screenW, 6 + 16, WHITE);
             display.DrawText(24, 6, string.Format("{0:HH:mm tt}", DateTime.Now), Font.F16, BLACK, WHITE);
 
-            display.ClearWindow(line3X, line3Y, line3X + screenW, line3Y + screenH, WHITE);
-            display.DrawText(line3X, line3Y, line3, Font.F12, BLACK, WHITE);
-            display.ClearWindow(line4X, line4Y, line4X + screenW, line4Y + screenH, WHITE);
-            display.DrawText(line4X, line4Y, line4, Font.F12, BLACK, WHITE);
-            display.ClearWindow(line5X, line5Y, line5X + screenW, line5Y + screenH, WHITE);
-            display.DrawText(line5X, line5Y, line5, Font.F12, BLACK, WHITE);
-            display.ClearWindow(line6X, line6Y, line6X + screenW, line6Y + screenH, WHITE);
-            display.DrawText(line6X, line6Y, line6, Font.F12, BLACK, WHITE);
+            display.ClearWindow(iconX, line3Y, iconX + screenW, line3Y + screenH, WHITE);
+            display.DrawIcon(iconX, line3Y, Icons.Thermo, Icons.ThermoW, Icons.ThermoH);
+            display.DrawText(textX, line3Y, line3, Font.F12, BLACK, WHITE);
+
+            display.ClearWindow(iconX, line4Y, iconX + screenW, line4Y + screenH, WHITE);
+            display.DrawIcon(iconX, line4Y, Icons.Drop, Icons.DropW, Icons.DropH);
+            display.DrawText(textX, line4Y, line4, Font.F12, BLACK, WHITE);
+
+            display.ClearWindow(iconX, line5Y, iconX + screenW, line5Y + screenH, WHITE);
+            display.DrawIcon(iconX, line5Y, Icons.Gauge, Icons.GaugeW, Icons.GaugeH);
+            display.DrawText(textX, line5Y, line5, Font.F12, BLACK, WHITE);
+
+            display.ClearWindow(iconX, line6Y, iconX + screenW, line6Y + screenH, WHITE);
+            display.DrawIcon(iconX, line6Y, Icons.Rain, Icons.RainW, Icons.RainH);
+            display.DrawText(textX, line6Y, line6, Font.F12, BLACK, WHITE);
 
             display.DisplayPartial();
 
