@@ -107,7 +107,7 @@ class Program {
             line6 = $"Rain: {prediction.Likelihood.Label()} (~{prediction.ConfidencePct}%)";
 
             display.ClearWindow(24, 6, 24 + screenW, 6 + 16, WHITE);
-            display.DrawText(24, 6, string.Format("{0:HH:mm tt}", DateTime.Now), Font.F16, BLACK, WHITE);
+            display.DrawText(24, 6, DateTime.Now.ToString("HH:mm"), Font.F16, BLACK, WHITE);
 
             display.ClearWindow(iconX, line3Y, iconX + screenW, line3Y + screenH, WHITE);
             display.DrawIcon(iconX, line3Y, Icons.Thermo, Icons.ThermoW, Icons.ThermoH);
