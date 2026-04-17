@@ -5,33 +5,33 @@ class Program {
         Console.WriteLine("Initialising display...");
         using var display = new Epd();
 
+        PressureSensor? pressureSensor = null;
+        try
+        {
+            pressureSensor = new PressureSensor();
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine($"BMP280 init failed: {e.Message}");
+        }
+
         display.Fill(WHITE);
 
-        // draw bell icon
         display.DrawIcon(4, 4, Icons.Bell, Icons.BellW, Icons.BellH);
-
-        // write Loading...
         display.DrawText(24, 6, "Loading...", Font.F16, BLACK, WHITE);
 
-        // draw check icon
         display.DrawIcon(4, 30, Icons.Check, Icons.CheckW, Icons.CheckH);
+        display.DrawText(24, 34, "System OK - test4", Font.F12, BLACK, WHITE);
 
-        // write "System OK"
-        display.DrawText(24, 34, "System OK", Font.F12, BLACK, WHITE);
-
-        // draw a horizontal line
         display.DrawLine(0, 52, 249, 52, BLACK);
-
-        /*// draw a rectangle around the edge of the screen
-        display.DrawRect(2, 2, 248, 120, BLACK, filled: false);*/
 
         Console.WriteLine("Setting base frame...");
         display.DisplayBase();
 
-        const ushort line3X = 0, line3Y = 58,line4X = 0,line4Y = 78, screenW = 244, screenH = 14;
+        const ushort line3X = 0, line3Y = 58, line4X = 0, line4Y = 78, line5X = 0, line5Y = 98, screenW = 244, screenH = 14;
         Dht11.Reading dht11Reading;
         float tempC, humidity;
-        string line3, line4;
+        string line3, line4, line5;
 
         while (true)
         {
@@ -51,6 +51,24 @@ class Program {
                 line4 = "-- sensor error --";
             }
 
+            try
+            {
+                if (pressureSensor != null)
+                {
+                    var r = pressureSensor.Read();
+                    line5 = $"Pressure: {r.PressureHpa:F1}hPa ({r.TemperatureC:F1}C)";
+                }
+                else
+                {
+                    line5 = "-- pressure unavailable --";
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"BMP280: {e.Message}");
+                line5 = "-- pressure error --";
+            }
+
             display.ClearWindow(24, 6, 24 + screenW, 6 + 16, WHITE);
             display.DrawText(24, 6, string.Format("{0:HH:mm tt}", DateTime.Now), Font.F16, BLACK, WHITE);
 
@@ -58,14 +76,15 @@ class Program {
             display.DrawText(line3X, line3Y, line3, Font.F12, BLACK, WHITE);
             display.ClearWindow(line4X, line4Y, line4X + screenW, line4Y + screenH, WHITE);
             display.DrawText(line4X, line4Y, line4, Font.F12, BLACK, WHITE);
-            
+            display.ClearWindow(line5X, line5Y, line5X + screenW, line5Y + screenH, WHITE);
+            display.DrawText(line5X, line5Y, line5, Font.F12, BLACK, WHITE);
 
             display.DisplayPartial();
 
             Console.WriteLine(line3);
             Console.WriteLine(line4);
+            Console.WriteLine(line5);
             
-            // sleep for 1 second
             Thread.Sleep(TimeSpan.FromSeconds(1));
         }
     }
