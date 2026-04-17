@@ -6,27 +6,50 @@ class Program {
         using var display = new Epd();
         var predictor = new RainPredictor();
 
-        PressureSensor? pressureSensor = null;
-        try
-        {
-            pressureSensor = new PressureSensor();
-        }
-        catch (Exception e)
-        {
-            Console.Error.WriteLine($"BMP280 init failed: {e.Message}");
-        }
+        // ── Startup sequence ─────────────────────────────────────────────────
+        const ushort chkX = 4, lblX = 24;
+        const ushort sensorStartY = 30, rowH = 16;
 
         display.Fill(WHITE);
-
         display.DrawIcon(4, 4, Icons.Bell, Icons.BellW, Icons.BellH);
-        display.DrawText(24, 6, "Loading...", Font.F16, BLACK, WHITE);
+        display.DrawText(24, 6, "Startup", Font.F16, BLACK, WHITE);
 
-        display.DrawIcon(4, 30, Icons.Check, Icons.CheckW, Icons.CheckH);
-        display.DrawText(24, 34, "System OK", Font.F12, BLACK, WHITE);
+        string[] sensors = ["E-Paper Display", "DHT11 Temp/Humidity", "BMP280 Pressure"];
+        for (int i = 0; i < sensors.Length; i++)
+            display.DrawText(lblX, (ushort)(sensorStartY + i * rowH), sensors[i], Font.F12, BLACK, WHITE);
 
-        display.DrawLine(0, 52, 249, 52, BLACK);
+        // EPD is already working if we got here — check it immediately
+        display.DrawIcon(chkX, sensorStartY, Icons.Check, Icons.CheckW, Icons.CheckH);
+        display.DisplayBase();
+        Console.WriteLine("EPD: OK");
 
-        Console.WriteLine("Setting base frame...");
+        // Init DHT11 and check immediately
+        bool dht11Ok = true;
+        try { Dht11.Read(); } catch { dht11Ok = false; }
+        display.DrawIcon(chkX, (ushort)(sensorStartY + rowH), dht11Ok ? Icons.Check : Icons.Cross,
+                         (ushort)(dht11Ok ? Icons.CheckW : Icons.CrossW),
+                         (ushort)(dht11Ok ? Icons.CheckH : Icons.CrossH));
+        display.DisplayPartial();
+        Console.WriteLine($"DHT11: {(dht11Ok ? "OK" : "FAIL")}");
+
+        // Init BMP280 and check immediately
+        PressureSensor? pressureSensor = null;
+        bool bmpOk = false;
+        try { pressureSensor = new PressureSensor(); bmpOk = true; }
+        catch (Exception e) { Console.Error.WriteLine($"BMP280: {e.Message}"); }
+        display.DrawIcon(chkX, (ushort)(sensorStartY + rowH * 2), bmpOk ? Icons.Check : Icons.Cross,
+                         (ushort)(bmpOk ? Icons.CheckW : Icons.CrossW),
+                         (ushort)(bmpOk ? Icons.CheckH : Icons.CrossH));
+        display.DisplayPartial();
+        Console.WriteLine($"BMP280: {(bmpOk ? "OK" : "FAIL")}");
+
+        // Hold the startup screen for 1.5s
+        Thread.Sleep(1500);
+
+        // ── Set base frame for sensor readings ───────────────────────────────
+        display.Fill(WHITE);
+        display.DrawIcon(4, 4, Icons.Bell, Icons.BellW, Icons.BellH);
+        display.DrawText(24, 6, "", Font.F16, BLACK, WHITE);
         display.DisplayBase();
 
         const ushort line3X = 0, line3Y = 56;
