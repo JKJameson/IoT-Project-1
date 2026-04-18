@@ -5,6 +5,11 @@ class Program {
         Console.WriteLine("Initialising display...");
         using var display = new Epd();
         var predictor = new RainPredictor();
+        var sensorData = new SensorData();
+
+        var htmlPath = Path.Combine(AppContext.BaseDirectory, "web", "index.html");
+        using var webServer = new WebServer(sensorData, htmlPath);
+        webServer.Start();
 
         // ── Startup sequence ─────────────────────────────────────────────────
         const ushort chkX = 4, lblX = 24;
@@ -13,6 +18,15 @@ class Program {
         display.Fill(WHITE);
         display.DrawIcon(4, 4, Icons.Bell, Icons.BellW, Icons.BellH);
         display.DrawText(24, 6, "Startup", Font.F16, BLACK, WHITE);
+
+        var ip = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+            .Where(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up
+                        && n.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Wireless80211
+                        && n.GetIPProperties().UnicastAddresses.Any(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork))
+            .SelectMany(n => n.GetIPProperties().UnicastAddresses)
+            .FirstOrDefault(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+        if (ip != null)
+            display.DrawText(24, 24, $"http://{ip.Address}", Font.F12, BLACK, WHITE);
 
         string[] sensors = ["E-Paper Display", "DHT11 Temp/Humidity", "BMP280 Pressure"];
         for (int i = 0; i < sensors.Length; i++)
@@ -83,12 +97,14 @@ class Program {
             }
 
             float? pressureHpa = null;
+            float? pressureTempC = null;
             try
             {
                 if (pressureSensor != null)
                 {
                     var r = pressureSensor.Read();
                     pressureHpa = r.PressureHpa;
+                    pressureTempC = r.TemperatureC;
                     line5 = $"Pressure: {r.PressureHpa:F1}hPa ({r.TemperatureC:F1}C)";
                     predictor.AddPressureSample(r.PressureHpa);
                 }
@@ -105,6 +121,8 @@ class Program {
 
             var prediction = predictor.Predict(tempC, humidity, pressureHpa);
             line6 = $"Rain: {prediction.Likelihood.Label()} (~{prediction.ConfidencePct}%)";
+
+            sensorData.Update(tempC, humidity, pressureHpa, pressureTempC, prediction);
 
             display.ClearWindow(24, 6, 24 + screenW, 6 + 16, WHITE);
             display.DrawText(24, 6, DateTime.Now.ToString("HH:mm"), Font.F16, BLACK, WHITE);

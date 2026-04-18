@@ -1,0 +1,68 @@
+using System.Text.Json.Serialization;
+
+public sealed class SensorData
+{
+    private readonly object _lock = new();
+    private float _tempC;
+    private float _humidity;
+    private float? _pressureHpa;
+    private float? _pressureTempC;
+    private string _rainLabel = "";
+    private int _rainConfidence;
+    private string _rainLikelihood = "";
+    private float? _dewPointC;
+    private float? _pressureTrend;
+    private DateTime _updatedAt;
+
+    public void Update(float tempC, float humidity, float? pressureHpa, float? pressureTempC,
+                       RainPrediction prediction)
+    {
+        lock (_lock)
+        {
+            _tempC = tempC;
+            _humidity = humidity;
+            _pressureHpa = pressureHpa;
+            _pressureTempC = pressureTempC;
+            _rainLabel = prediction.Likelihood.Label();
+            _rainConfidence = prediction.ConfidencePct;
+            _rainLikelihood = prediction.Likelihood.ToString();
+            _dewPointC = prediction.DewPointC;
+            _pressureTrend = prediction.PressureTrendHpaPerHour;
+            _updatedAt = DateTime.UtcNow;
+        }
+    }
+
+    public Snapshot Take()
+    {
+        lock (_lock)
+        {
+            return new Snapshot
+            {
+                TemperatureC = MathF.Round(_tempC, 1),
+                Humidity = MathF.Round(_humidity, 0),
+                PressureHpa = _pressureHpa.HasValue ? MathF.Round(_pressureHpa.Value, 1) : null,
+                PressureTempC = _pressureTempC.HasValue ? MathF.Round(_pressureTempC.Value, 1) : null,
+                RainLabel = _rainLabel,
+                RainConfidence = _rainConfidence,
+                RainLikelihood = _rainLikelihood,
+                DewPointC = _dewPointC.HasValue ? MathF.Round(_dewPointC.Value, 1) : null,
+                PressureTrendHpaPerHour = _pressureTrend.HasValue ? MathF.Round(_pressureTrend.Value, 2) : null,
+                UpdatedAt = _updatedAt,
+            };
+        }
+    }
+}
+
+public class Snapshot
+{
+    public float TemperatureC { get; set; }
+    public float Humidity { get; set; }
+    public float? PressureHpa { get; set; }
+    public float? PressureTempC { get; set; }
+    public string RainLabel { get; set; } = "";
+    public int RainConfidence { get; set; }
+    public string RainLikelihood { get; set; } = "";
+    public float? DewPointC { get; set; }
+    public float? PressureTrendHpaPerHour { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}

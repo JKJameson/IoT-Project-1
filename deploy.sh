@@ -32,6 +32,10 @@ ssh "$PI" "sudo systemctl stop epdapp.service 2>/dev/null || true"
 rsync -az --progress /Users/josh/Dev/iot-project-1/csharp/bin/pi/EpdApp "${PI}:${REMOTE}/csharp/EpdApp.tmp"
 ssh "$PI" "mv -f ${REMOTE}/csharp/EpdApp.tmp ${REMOTE}/csharp/EpdApp"
 
+echo "==> Deploying web files to Pi ..."
+ssh "$PI" "mkdir -p ${REMOTE}/csharp/web"
+rsync -az /Users/josh/Dev/iot-project-1/csharp/web/index.html "${PI}:${REMOTE}/csharp/web/index.html"
+
 echo "==> Installing system service ..."
 scp /Users/josh/Dev/iot-project-1/csharp/epdapp.service "${PI}:/tmp/epdapp.service"
 ssh "$PI" bash -s <<'REMOTE'

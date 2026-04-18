@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IoT Weather Station</title>
+<style>
+  body { font-family: monospace; max-width: 480px; margin: 2em auto; padding: 0 1em; background: #fff; color: #222; }
+  h1 { font-size: 1.2em; margin-bottom: 0.2em; }
+  table { width: 100%; border-collapse: collapse; margin-top: 1em; }
+  td, th { text-align: left; padding: 0.3em 0.5em; border-bottom: 1px solid #eee; }
+  th { width: 40%; color: #666; }
+  .updated { font-size: 0.8em; color: #999; margin-top: 1em; }
+  .err { color: #c00; }
+</style>
+</head>
+<body>
+<h1>Weather Station</h1>
+<table>
+  <tr><th>Temperature</th><td id="temp">Loading...</td></tr>
+  <tr><th>Humidity</th><td id="hum">Loading...</td></tr>
+  <tr><th>Pressure</th><td id="pres">Loading...</td></tr>
+  <tr><th>Dew Point</th><td id="dew">Loading...</td></tr>
+  <tr><th>Pressure Trend</th><td id="trend">Loading...</td></tr>
+  <tr><th>Rain Prediction</th><td id="rain">Loading...</td></tr>
+</table>
+<div class="updated" id="ts">Loading...</div>
+<script>
+  function $(id) { return document.getElementById(id); }
+
+  function fmt(v, unit) {
+    return v != null ? v + unit : '<span class="err">N/A</span>';
+  }
+
+  function trendArrow(t) {
+    if (t == null) return '<span class="err">N/A</span>';
+    if (t < -1) return t + ' hPa/hr &#x25BC;';
+    if (t < -0.2) return t + ' hPa/hr &#x2198;';
+    if (t > 0.2) return t + ' hPa/hr &#x2197;';
+    return t + ' hPa/hr &#x2194;';
+  }
+
+  function refresh() {
+    fetch('/api/sensors')
+      .then(r => r.json())
+      .then(d => {
+        $('temp').innerHTML  = fmt(d.temperatureC, ' &deg;C');
+        $('hum').innerHTML   = fmt(d.humidity, ' %');
+        $('pres').innerHTML  = d.pressureHpa != null ? d.pressureHpa + ' hPa' : '<span class="err">N/A</span>';
+        $('dew').innerHTML   = fmt(d.dewPointC, ' &deg;C');
+        $('trend').innerHTML = trendArrow(d.pressureTrendHpaPerHour);
+        $('rain').innerHTML  = d.rainLabel + ' (' + d.rainConfidence + '%)';
+        $('ts').textContent  = 'Updated: ' + new Date(d.updatedAt).toLocaleTimeString();
+      })
+      .catch(() => {
+        $('ts').textContent = 'Update failed';
+      });
+  }
+
+  refresh();
+  setInterval(refresh, 2000);
+</script>
+</body>
+</html>
