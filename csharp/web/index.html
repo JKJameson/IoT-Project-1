@@ -87,7 +87,7 @@
       font-size: 1.8rem;
       font-weight: 500;
     }
-    .real-feel, .wind-row, .extra-details {
+    .real-feel {
       display: flex;
       gap: 20px;
       flex-wrap: wrap;
@@ -101,7 +101,10 @@
     .extra-details {
       margin-top: 12px;
       background: rgba(0,0,0,0.2);
+      display: flex;
       justify-content: space-between;
+      padding: 10px 16px;
+      border-radius: 48px;
     }
     .detail-item {
       display: flex;
@@ -274,7 +277,6 @@
     </div>
     <div class="real-feel">
       <span>🌡️ RealFeel <strong id="realFeelVal">--</strong>°</span>
-      <span>💨 Wind <strong id="windVal">-- km/h</strong></span>
     </div>
     <div class="extra-details">
       <div class="detail-item"><span class="detail-label">Pressure</span><span class="detail-value" id="pressureVal">-- hPa</span></div>
@@ -284,16 +286,16 @@
 
   <div class="overview-grid">
     <div class="stat-card">
-      <div class="stat-title">💨 Wind Status</div>
-      <div class="stat-value" id="windSpeedOverview">--</div>
-      <div class="stat-unit">km/h</div>
-      <div class="stat-sub" id="windDirectionText">--</div>
-    </div>
-    <div class="stat-card">
       <div class="stat-title">💧 Humidity</div>
       <div class="stat-value" id="humidityOverview">--</div>
       <div class="stat-unit">%</div>
       <div class="stat-sub" id="dewPointSub">Dew: --°</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">📊 Pressure Trend</div>
+      <div class="stat-value" id="pressureTrendValue">--</div>
+      <div class="stat-unit">hPa/hr</div>
+      <div class="stat-sub" id="pressureTrendDirection">--</div>
     </div>
   </div>
 
@@ -402,6 +404,22 @@
       })
     }).catch(err => console.log('Email endpoint not configured:', err));
     */
+  }
+  
+  // Helper function to get pressure trend arrow and direction
+  function getPressureTrendDisplay(trend) {
+    if (trend === null || trend === undefined) {
+      return { value: '--', direction: 'Stable' };
+    }
+    
+    let direction = '';
+    if (trend < -1) direction = '▼ Falling Fast';
+    else if (trend < -0.2) direction = '↘ Falling';
+    else if (trend > 0.2) direction = '↗ Rising';
+    else if (trend > 1) direction = '▲ Rising Fast';
+    else direction = '→ Stable';
+    
+    return { value: trend.toFixed(2), direction: direction };
   }
   
   // Main rain detection logic
@@ -533,14 +551,8 @@
           realFeel = Math.round(realFeel * 10) / 10;
         }
         
-        // Wind calculation based on pressure trend
-        let windSpeed = 6.7;
-        let windDirection = "N-E";
-        if (pressureTrend !== null && Math.abs(pressureTrend) > 0.3) {
-          windSpeed = (7 + Math.abs(pressureTrend) * 1.8);
-          windSpeed = Math.round(windSpeed * 10) / 10;
-          windDirection = pressureTrend > 0 ? "N-W" : "E-SE";
-        }
+        // Pressure trend display
+        const trendDisplay = getPressureTrendDisplay(pressureTrend);
         
         const formattedTime = updatedAtRaw.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit', second:'2-digit' });
         safeSetHTML('liveTimestamp', `🕒 ${formattedTime}`);
@@ -559,15 +571,14 @@
           safeSetHTML('realFeelVal', '--');
         }
         
-        // Wind
-        safeSetHTML('windVal', `${windDirection} ${windSpeed} km/h`);
-        safeSetHTML('windSpeedOverview', windSpeed);
-        safeSetHTML('windDirectionText', windDirection);
-        
         // Pressure and Humidity
         safeSetHTML('pressureVal', (pressureHpa !== null) ? `${pressureHpa} hPa` : '-- hPa');
         safeSetHTML('humidityVal', (humidityRaw !== null) ? `${humidityRaw}%` : '--%');
         safeSetHTML('humidityOverview', (humidityRaw !== null) ? `${humidityRaw}%` : '--%');
+        
+        // Pressure Trend
+        safeSetHTML('pressureTrendValue', trendDisplay.value);
+        safeSetHTML('pressureTrendDirection', trendDisplay.direction);
         
         // Dew point
         if (dewPoint !== null) {
@@ -587,8 +598,7 @@
         updateRainTags(finalRainLabel, finalConfidence);
         
         // Footer message
-        let trendStr = pressureTrend !== null ? `${pressureTrend.toFixed(2)} hPa/hr` : 'N/A';
-        safeSetHTML('systemMessage', `✅ Rain monitoring active • ${isRaining ? '🌧️ RAINING NOW' : '☀️ NO RAIN'} • Pressure trend: ${trendStr}`);
+        safeSetHTML('systemMessage', `✅ Rain monitoring active • ${isRaining ? '🌧️ RAINING NOW' : '☀️ NO RAIN'} • Updates every 2s`);
       })
       .catch(error => {
         console.warn("Fetch error", error);
