@@ -270,7 +270,7 @@
   </div>
 
   <div class="today-card">
-    <div class="day-name" id="todayDayName">Friday</div>
+    <div class="day-name" id="todayDayName">Tuesday</div>
     <div class="time-stamp" id="currentClock">--:-- --</div>
     <div class="temp-big">
       <span id="bigTemp">--</span><span>°</span>
@@ -294,7 +294,7 @@
     <div class="stat-card">
       <div class="stat-title">📊 Pressure Trend</div>
       <div class="stat-value" id="pressureTrendValue">--</div>
-      <div class="stat-unit">hPa/hr</div>
+      <div class="stat-unit">hPa</div>
       <div class="stat-sub" id="pressureTrendDirection">--</div>
     </div>
   </div>
@@ -329,6 +329,11 @@
   let lastNotificationTime = 0;
   const NOTIFICATION_COOLDOWN = 300000; // 5 minutes cooldown between same type notifications
   
+  // Pressure trend tracking
+  let previousPressure = null;
+  let previousPressureTime = null;
+  let currentTrend = 0;
+  
   // 🔴🔴🔴 SET YOUR EMAIL ADDRESS HERE 🔴🔴🔴
   const YOUR_EMAIL = "your-email@gmail.com";  // <-- CHANGE THIS TO YOUR EMAIL
   
@@ -347,6 +352,68 @@
     if (element) {
       element.innerHTML = value;
     }
+  }
+  
+  // Calculate pressure trend from historical data
+  function calculatePressureTrend(currentPressure) {
+    const now = new Date();
+    
+    if (previousPressure !== null && previousPressureTime !== null) {
+      // Calculate time difference in hours
+      const timeDiffHours = (now - previousPressureTime) / (1000 * 60 * 60);
+      
+      if (timeDiffHours > 0) {
+        // Calculate change in pressure per hour
+        const pressureChange = currentPressure - previousPressure;
+        const trendPerHour = pressureChange / timeDiffHours;
+        currentTrend = trendPerHour;
+      }
+    }
+    
+    // Update previous values for next calculation
+    previousPressure = currentPressure;
+    previousPressureTime = now;
+    
+    return currentTrend;
+  }
+  
+  // Helper function to get pressure trend display
+  function getPressureTrendDisplay(trend) {
+    if (trend === null || trend === undefined || trend === 0) {
+      return { value: '0.00', direction: '→ Stable', arrow: '→' };
+    }
+    
+    let direction = '';
+    let arrow = '';
+    
+    if (trend < -2) {
+      arrow = '▼▼';
+      direction = 'Falling Fast';
+    } else if (trend < -0.5) {
+      arrow = '▼';
+      direction = 'Falling';
+    } else if (trend > 2) {
+      arrow = '▲▲';
+      direction = 'Rising Fast';
+    } else if (trend > 0.5) {
+      arrow = '▲';
+      direction = 'Rising';
+    } else if (trend > 0.1) {
+      arrow = '↗';
+      direction = 'Rising Slowly';
+    } else if (trend < -0.1) {
+      arrow = '↘';
+      direction = 'Falling Slowly';
+    } else {
+      arrow = '→';
+      direction = 'Stable';
+    }
+    
+    return { 
+      value: Math.abs(trend).toFixed(2), 
+      direction: `${arrow} ${direction}`,
+      arrow: arrow
+    };
   }
   
   // Helper: Show notification popup
@@ -404,22 +471,6 @@
       })
     }).catch(err => console.log('Email endpoint not configured:', err));
     */
-  }
-  
-  // Helper function to get pressure trend arrow and direction
-  function getPressureTrendDisplay(trend) {
-    if (trend === null || trend === undefined) {
-      return { value: '--', direction: 'Stable' };
-    }
-    
-    let direction = '';
-    if (trend < -1) direction = '▼ Falling Fast';
-    else if (trend < -0.2) direction = '↘ Falling';
-    else if (trend > 0.2) direction = '↗ Rising';
-    else if (trend > 1) direction = '▲ Rising Fast';
-    else direction = '→ Stable';
-    
-    return { value: trend.toFixed(2), direction: direction };
   }
   
   // Main rain detection logic
@@ -530,10 +581,15 @@
         const humidityRaw = (data.humidity !== undefined && data.humidity !== null) ? data.humidity : null;
         const pressureHpa = (data.pressureHpa !== undefined && data.pressureHpa !== null) ? data.pressureHpa : null;
         const dewPoint = (data.dewPointC !== undefined && data.dewPointC !== null) ? data.dewPointC : null;
-        const pressureTrend = (data.pressureTrendHpaPerHour !== undefined && data.pressureTrendHpaPerHour !== null) ? data.pressureTrendHpaPerHour : null;
         const rainLabelRaw = data.rainLabel || (data.rainConfidence !== undefined ? (data.rainConfidence > 30 ? 'Rain possible' : 'No rain') : 'No rain');
         const rainConfidence = (data.rainConfidence !== undefined && data.rainConfidence !== null) ? data.rainConfidence : 0;
         const updatedAtRaw = data.updatedAt ? new Date(data.updatedAt) : new Date();
+        
+        // Calculate pressure trend from pressure changes
+        let pressureTrend = null;
+        if (pressureHpa !== null) {
+          pressureTrend = calculatePressureTrend(pressureHpa);
+        }
         
         // CRITICAL: Check for rain changes and trigger notifications
         checkRainChange(rainConfidence, rainLabelRaw, tempC, humidityRaw);
@@ -551,7 +607,7 @@
           realFeel = Math.round(realFeel * 10) / 10;
         }
         
-        // Pressure trend display
+        // Pressure trend display (calculated from actual pressure changes)
         const trendDisplay = getPressureTrendDisplay(pressureTrend);
         
         const formattedTime = updatedAtRaw.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit', second:'2-digit' });
@@ -576,9 +632,18 @@
         safeSetHTML('humidityVal', (humidityRaw !== null) ? `${humidityRaw}%` : '--%');
         safeSetHTML('humidityOverview', (humidityRaw !== null) ? `${humidityRaw}%` : '--%');
         
-        // Pressure Trend
-        safeSetHTML('pressureTrendValue', trendDisplay.value);
-        safeSetHTML('pressureTrendDirection', trendDisplay.direction);
+        // Pressure Trend - NOW WORKING with calculated values
+        if (pressureTrend !== null && pressureTrend !== 0) {
+          safeSetHTML('pressureTrendValue', trendDisplay.value);
+          safeSetHTML('pressureTrendDirection', trendDisplay.direction);
+        } else if (previousPressure !== null && pressureHpa !== null) {
+          // Still collecting data, show waiting message
+          safeSetHTML('pressureTrendValue', '--');
+          safeSetHTML('pressureTrendDirection', '→ Collecting data...');
+        } else {
+          safeSetHTML('pressureTrendValue', '0.00');
+          safeSetHTML('pressureTrendDirection', '→ Stable');
+        }
         
         // Dew point
         if (dewPoint !== null) {
@@ -597,8 +662,9 @@
         safeSetHTML('rainPercentDisplay', `${finalConfidence}%`);
         updateRainTags(finalRainLabel, finalConfidence);
         
-        // Footer message
-        safeSetHTML('systemMessage', `✅ Rain monitoring active • ${isRaining ? '🌧️ RAINING NOW' : '☀️ NO RAIN'} • Updates every 2s`);
+        // Footer message with trend info
+        let trendEmoji = trendDisplay.arrow || '→';
+        safeSetHTML('systemMessage', `✅ Rain monitoring active • ${isRaining ? '🌧️ RAINING NOW' : '☀️ NO RAIN'} • Pressure: ${trendEmoji} ${trendDisplay.direction} • Updates every 2s`);
       })
       .catch(error => {
         console.warn("Fetch error", error);
