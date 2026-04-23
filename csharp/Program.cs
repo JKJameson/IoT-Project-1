@@ -5,6 +5,10 @@ class Program {
         Console.WriteLine("Initialising display...");
         using var display = new Epd();
         var predictor = new RainPredictor();
+
+        string emailTo = Environment.GetEnvironmentVariable("ALERT_EMAIL") ?? "your-email@gmail.com";
+        var alertService = new AlertService(emailTo);
+
         var sensorData = new SensorData();
 
         var htmlPath = Path.Combine(AppContext.BaseDirectory, "web", "index.html");
@@ -122,7 +126,9 @@ class Program {
             var prediction = predictor.Predict(tempC, humidity, pressureHpa);
             line6 = $"Rain: {prediction.Likelihood.Label()} (~{prediction.ConfidencePct}%)";
 
-            sensorData.Update(tempC, humidity, pressureHpa, pressureTempC, prediction);
+            var (alertMessage, isRaining) = alertService.CheckRainChange(prediction, tempC, humidity);
+
+            sensorData.Update(tempC, humidity, pressureHpa, pressureTempC, prediction, alertMessage, isRaining);
 
             display.ClearWindow(24, 6, 24 + screenW, 6 + 16, WHITE);
             display.DrawText(24, 6, DateTime.Now.ToString("HH:mm"), Font.F16, BLACK, WHITE);

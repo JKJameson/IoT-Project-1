@@ -12,10 +12,12 @@ public sealed class SensorData
     private string _rainLikelihood = "";
     private float? _dewPointC;
     private float? _pressureTrend;
+    private string _rainAlertMessage = "🌧️ Rain monitor active: Will notify when rain starts or stops";
+    private bool _isRaining;
     private DateTime _updatedAt;
 
     public void Update(float tempC, float humidity, float? pressureHpa, float? pressureTempC,
-                       RainPrediction prediction)
+                       RainPrediction prediction, string rainAlertMessage, bool isRaining)
     {
         lock (_lock)
         {
@@ -28,6 +30,8 @@ public sealed class SensorData
             _rainLikelihood = prediction.Likelihood.ToString();
             _dewPointC = prediction.DewPointC;
             _pressureTrend = prediction.PressureTrendHpaPerHour;
+            _rainAlertMessage = rainAlertMessage;
+            _isRaining = isRaining;
             _updatedAt = DateTime.UtcNow;
         }
     }
@@ -47,6 +51,8 @@ public sealed class SensorData
                 RainLikelihood = _rainLikelihood,
                 DewPointC = _dewPointC.HasValue ? MathF.Round(_dewPointC.Value, 1) : null,
                 PressureTrendHpaPerHour = _pressureTrend.HasValue ? MathF.Round(_pressureTrend.Value, 2) : null,
+                RainAlertMessage = _rainAlertMessage,
+                IsRaining = _isRaining,
                 UpdatedAt = _updatedAt,
             };
         }
@@ -64,5 +70,7 @@ public class Snapshot
     public string RainLikelihood { get; set; } = "";
     public float? DewPointC { get; set; }
     public float? PressureTrendHpaPerHour { get; set; }
+    public string RainAlertMessage { get; set; } = "";
+    public bool IsRaining { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
