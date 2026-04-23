@@ -94,26 +94,21 @@
       opacity: 0.7;
       margin-bottom: 12px;
     }
-    .temp-big {
+.temp-big {
       font-size: 3.4rem;
       font-weight: 700;
       line-height: 1;
-      margin: 8px 0 8px;
+      margin: 0;
     }
-    .temp-big span {
-      font-size: 1.8rem;
-      font-weight: 500;
+    .temp-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
     }
     .real-feel {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-      font-size: 0.85rem;
-      background: rgba(255,255,255,0.12);
-      border-radius: 48px;
-      padding: 10px 16px;
-      backdrop-filter: blur(2px);
+      font-size: 1rem;
+      color: rgba(255,255,255,0.7);
     }
     .extra-details {
       margin-top: 12px;
@@ -192,6 +187,7 @@
     }
     .rain-tags {
       display: flex;
+      justify-content: center;
       gap: 12px;
       margin-top: 12px;
       color: #567d95;
@@ -267,11 +263,13 @@
   </div>
 
   <div class="today-card">
-    <div class="temp-big">
-      <span id="bigTemp">--</span><span>°</span>
-    </div>
-    <div class="real-feel">
-      <span>🌡️ RealFeel <strong id="realFeelVal">--</strong>°</span>
+    <div class="temp-row">
+      <div class="temp-big">
+        <span id="bigTemp">--</span><span>°</span>
+      </div>
+      <div class="real-feel">
+        <span>🌡️ RealFeel <strong id="realFeelVal">--</strong>°</span>
+      </div>
     </div>
     <div class="extra-details">
       <div class="detail-item"><span class="detail-label">📊 Pressure</span><span class="detail-value" id="pressureVal">-- hPa</span></div>
@@ -471,10 +469,8 @@
 
         // Dew point
         if (dewPoint !== null) {
-          safeSetHTML('dewPointSub', `Dew: ${formatTemp(dewPoint)}°C`);
           safeSetHTML('dewPointVal', `${formatTemp(dewPoint)}°C`);
         } else {
-          safeSetHTML('dewPointSub', `Dew: --°`);
           safeSetHTML('dewPointVal', '--°C');
         }
         
