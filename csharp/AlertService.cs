@@ -10,6 +10,11 @@ public sealed class AlertService
     private readonly object _lock = new();
     private readonly HttpClient _http = new();
 
+    // For deployment: set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID env vars
+    // Or replace the placeholders below for hardcoded values
+    private const string? TelegramBotToken = "8429669155:AAHfLkioktJVb0tNvA3-fqONybYaq8xp9mY";
+    private const string? TelegramChatId = "-5228658452";
+
     private bool _isRaining;
     private DateTime _lastNotificationTime = DateTime.MinValue;
     private string _lastNotificationType = "";
@@ -116,12 +121,13 @@ public sealed class AlertService
     {
         try
         {
-            string? botToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN");
-            string? chatId = Environment.GetEnvironmentVariable("TELEGRAM_CHAT_ID");
+            string? botToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN") ?? TelegramBotToken;
+            string? chatId = Environment.GetEnvironmentVariable("TELEGRAM_CHAT_ID") ?? TelegramChatId;
 
-            if (string.IsNullOrEmpty(botToken) || string.IsNullOrEmpty(chatId))
+            if (string.IsNullOrEmpty(botToken) || string.IsNullOrEmpty(chatId) ||
+                botToken == "YOUR_TELEGRAM_BOT_TOKEN" || chatId == "YOUR_TELEGRAM_CHAT_ID")
             {
-                Console.WriteLine($"📱 TELEGRAM WOULD BE SENT: {message}");
+                Console.WriteLine($"📱 TELEGRAM NOT CONFIGURED: {message}");
                 return;
             }
 
