@@ -105,10 +105,13 @@
       justify-content: space-between;
       padding: 10px 16px;
       border-radius: 48px;
+      gap: 8px;
     }
     .detail-item {
       display: flex;
       flex-direction: column;
+      text-align: center;
+      flex: 1;
     }
     .detail-label {
       font-size: 0.7rem;
@@ -117,44 +120,6 @@
     .detail-value {
       font-weight: 600;
       font-size: 0.9rem;
-    }
-
-    .overview-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin: 20px 0 18px;
-    }
-    .stat-card {
-      background: #f8fafd;
-      border-radius: 28px;
-      padding: 14px 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-      border: 1px solid #eef2f8;
-    }
-    .stat-title {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #5d7b8c;
-      margin-bottom: 10px;
-    }
-    .stat-value {
-      font-size: 1.7rem;
-      font-weight: 700;
-      color: #1a2e3f;
-      line-height: 1.2;
-    }
-    .stat-unit {
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: #5b7c91;
-    }
-    .stat-sub {
-      font-size: 0.7rem;
-      color: #6e8ea0;
-      margin-top: 6px;
     }
 
     .device-panel {
@@ -281,21 +246,7 @@
     <div class="extra-details">
       <div class="detail-item"><span class="detail-label">Pressure</span><span class="detail-value" id="pressureVal">-- hPa</span></div>
       <div class="detail-item"><span class="detail-label">Humidity</span><span class="detail-value" id="humidityVal">--%</span></div>
-    </div>
-  </div>
-
-  <div class="overview-grid">
-    <div class="stat-card">
-      <div class="stat-title">💧 Humidity</div>
-      <div class="stat-value" id="humidityOverview">--</div>
-      <div class="stat-unit">%</div>
-      <div class="stat-sub" id="dewPointSub">Dew: --°</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-title">📊 Pressure Trend</div>
-      <div class="stat-value" id="pressureTrendValue">--</div>
-      <div class="stat-unit">hPa</div>
-      <div class="stat-sub" id="pressureTrendDirection">--</div>
+      <div class="detail-item"><span class="detail-label">Dew Point</span><span class="detail-value" id="dewPointVal">--°C</span></div>
     </div>
   </div>
 
@@ -630,26 +581,14 @@
         // Pressure and Humidity
         safeSetHTML('pressureVal', (pressureHpa !== null) ? `${pressureHpa} hPa` : '-- hPa');
         safeSetHTML('humidityVal', (humidityRaw !== null) ? `${humidityRaw}%` : '--%');
-        safeSetHTML('humidityOverview', (humidityRaw !== null) ? `${humidityRaw}%` : '--%');
-        
-        // Pressure Trend - NOW WORKING with calculated values
-        if (pressureTrend !== null && pressureTrend !== 0) {
-          safeSetHTML('pressureTrendValue', trendDisplay.value);
-          safeSetHTML('pressureTrendDirection', trendDisplay.direction);
-        } else if (previousPressure !== null && pressureHpa !== null) {
-          // Still collecting data, show waiting message
-          safeSetHTML('pressureTrendValue', '--');
-          safeSetHTML('pressureTrendDirection', '→ Collecting data...');
-        } else {
-          safeSetHTML('pressureTrendValue', '0.00');
-          safeSetHTML('pressureTrendDirection', '→ Stable');
-        }
-        
+
         // Dew point
         if (dewPoint !== null) {
           safeSetHTML('dewPointSub', `Dew: ${formatTemp(dewPoint)}°C`);
+          safeSetHTML('dewPointVal', `${formatTemp(dewPoint)}°C`);
         } else {
           safeSetHTML('dewPointSub', `Dew: --°`);
+          safeSetHTML('dewPointVal', '--°C');
         }
         
         // Rain prediction
