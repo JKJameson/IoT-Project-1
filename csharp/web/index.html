@@ -501,24 +501,10 @@
     const isHeavy = labelLower.includes('heavy') || (conf >= 70 && isRainy);
     const isSunny = labelLower.includes('no rain') || (conf <= 25 && !isRainy);
 
-    let rainyLevel = 'Unlikely';
-    if (conf >= 70) rainyLevel = 'Very likely';
-    else if (conf >= 40) rainyLevel = 'Likely';
-    else if (conf >= 20) rainyLevel = 'Possible';
-
-    let sunnyLevel = 'Unlikely';
-    if (conf <= 15) sunnyLevel = 'Very likely';
-    else if (conf <= 35) sunnyLevel = 'Likely';
-    else if (conf <= 55) sunnyLevel = 'Possible';
-
-    let heavyLevel = 'Unlikely';
-    if (conf >= 80) heavyLevel = 'Likely';
-    else if (conf >= 60) heavyLevel = 'Possible';
-
-    // Keep labels in sync with changing values
-    rainyTag.textContent = `🌧️ Rainy (${rainyLevel}, ${conf}%)`;
-    sunnyTag.textContent = `☀️ Sunny (${sunnyLevel})`;
-    heavyTag.textContent = `⛈️ Heavy (${heavyLevel}, ${conf}%)`;
+    // Keep labels simple and update rain tag state
+    rainyTag.textContent = isRainy ? '🌧️ Rainy' : '🌧️ No rain';
+    sunnyTag.textContent = '☀️ Sunny';
+    heavyTag.textContent = '⛈️ Heavy';
     
     [rainyTag, sunnyTag, heavyTag].forEach(t => { t.style.opacity = '0.5'; t.style.fontWeight = 'normal'; });
     if (isHeavy) {
