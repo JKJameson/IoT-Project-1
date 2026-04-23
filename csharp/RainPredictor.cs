@@ -28,12 +28,15 @@ public record RainPrediction(
 
 public sealed class RainPredictor
 {
-    private readonly Queue<(DateTime Time, float Pressure)> _history = new(12);
+    private readonly Queue<(DateTime Time, float Pressure)> _history = new();
+    private const int MaxAgeMinutes = 10;
 
     public void AddPressureSample(float pressureHpa)
     {
-        _history.Enqueue((DateTime.UtcNow, pressureHpa));
-        while (_history.Count > 12)
+        var now = DateTime.UtcNow;
+        _history.Enqueue((now, pressureHpa));
+
+        while (_history.Count > 0 && (now - _history.Peek().Time).TotalMinutes > MaxAgeMinutes)
             _history.Dequeue();
     }
 
@@ -109,16 +112,35 @@ public sealed class RainPredictor
 
     private float? PressureTrend()
     {
-        if (_history.Count < 2)
+        if (_history.Count < 5)
             return null;
 
-        var oldest = _history.First();
-        var newest = _history.Last();
-        float hours = (float)(newest.Time - oldest.Time).TotalHours;
-        if (hours < 0.01)
+        // Use index as x (assuming roughly equal time intervals)
+        int n = _history.Count;
+        double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+
+        int i = 0;
+        foreach (var (_, p) in _history)
+        {
+            sumX += i;
+            sumY += p;
+            sumXY += i * p;
+            sumX2 += i * i;
+            i++;
+        }
+
+        double denom = n * sumX2 - sumX * sumX;
+        if (Math.Abs(denom) < 0.0001)
             return null;
 
-        return (newest.Pressure - oldest.Pressure) / hours;
+        // slope is change in pressure per step
+        double slopePerStep = (n * sumXY - sumX * sumY) / denom;
+        double totalMinutes = (_history.Last().Time - _history.First().Time).TotalMinutes;
+        if (totalMinutes < 0.5)
+            return null;
+
+        // Convert to hPa per hour
+        return (float)(slopePerStep * 60.0 / totalMinutes * n);
     }
 
     private static float DewPoint(float tempC, float humidity)
