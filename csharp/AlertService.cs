@@ -46,7 +46,7 @@ public sealed class AlertService
                     _lastNotificationType = "start";
                     SendEmail("🌧️ RAIN STARTED at your weather station",
                         $"Rain has started!\n\nConfidence: {prediction.ConfidencePct}%\nTemperature: {tempC}°C\nHumidity: {humidity}%\nTime: {DateTime.Now:g}\n\nPlease take necessary precautions.");
-                    SendTelegram($"🌧️ RAIN STARTED!\n\nConfidence: {prediction.ConfidencePct}%\nTemp: {tempC}°C | Humidity: {humidity}%\nTime: {DateTime.Now:HH:mm}");
+                    SendTelegramAsync($"🌧️ RAIN STARTED!\n\nConfidence: {prediction.ConfidencePct}%\nTemp: {tempC}°C | Humidity: {humidity}%\nTime: {DateTime.Now:HH:mm}").Wait();
                 }
             }
             else if (!isNowRaining && wasRaining)
@@ -60,7 +60,7 @@ public sealed class AlertService
                     _lastNotificationType = "stop";
                     SendEmail("☀️ RAIN STOPPED at your weather station",
                         $"Rain has stopped!\n\nLast confidence: {prediction.ConfidencePct}%\nTemperature: {tempC}°C\nHumidity: {humidity}%\nTime: {DateTime.Now:g}\n\nWeather is clearing up.");
-                    SendTelegram($"☀️ RAIN STOPPED\n\nLast confidence: {prediction.ConfidencePct}%\nTemp: {tempC}°C | Humidity: {humidity}%\nTime: {DateTime.Now:HH:mm}");
+                    SendTelegramAsync($"☀️ RAIN STOPPED\n\nLast confidence: {prediction.ConfidencePct}%\nTemp: {tempC}°C | Humidity: {humidity}%\nTime: {DateTime.Now:HH:mm}").Wait();
                 }
             }
             else
@@ -117,7 +117,7 @@ public sealed class AlertService
         }
     }
 
-    private async void SendTelegram(string message)
+    private async Task<bool> SendTelegramAsync(string message)
     {
         try
         {
@@ -128,7 +128,7 @@ public sealed class AlertService
                 botToken == "YOUR_TELEGRAM_BOT_TOKEN" || chatId == "YOUR_TELEGRAM_CHAT_ID")
             {
                 Console.WriteLine($"📱 TELEGRAM NOT CONFIGURED: {message}");
-                return;
+                return false;
             }
 
             var url = $"https://api.telegram.org/bot{botToken}/sendMessage";
@@ -139,13 +139,25 @@ public sealed class AlertService
 
             var response = await _http.PostAsync(url, content);
             if (response.IsSuccessStatusCode)
+            {
                 Console.WriteLine("✅ Telegram message sent");
+                return true;
+            }
             else
+            {
                 Console.WriteLine($"⚠️ Telegram error: {response.StatusCode}");
+                return false;
+            }
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Telegram error: {ex.Message}");
+            return false;
         }
+    }
+
+    public bool SendTestTelegram()
+    {
+        return SendTelegramAsync("🧪 Weather Nest: Test message from your weather station!\nTime: " + DateTime.Now.ToString("g")).Result;
     }
 }

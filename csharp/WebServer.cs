@@ -5,6 +5,7 @@ public sealed class WebServer : IDisposable
 {
     private readonly HttpListener _listener;
     private readonly SensorData _data;
+    private readonly AlertService? _alertService;
     private readonly string _htmlPath;
     private readonly CancellationTokenSource _cts = new();
     private Task? _task;
@@ -12,6 +13,15 @@ public sealed class WebServer : IDisposable
     public WebServer(SensorData data, string htmlPath, string prefix = "http://+:80/")
     {
         _data = data;
+        _htmlPath = Path.GetFullPath(htmlPath);
+        _listener = new HttpListener();
+        _listener.Prefixes.Add(prefix);
+    }
+
+    public WebServer(SensorData data, AlertService alertService, string htmlPath, string prefix = "http://+:80/")
+    {
+        _data = data;
+        _alertService = alertService;
         _htmlPath = Path.GetFullPath(htmlPath);
         _listener = new HttpListener();
         _listener.Prefixes.Add(prefix);
@@ -49,6 +59,9 @@ public sealed class WebServer : IDisposable
                 case "/api/sensors":
                     await HandleApi(ctx);
                     break;
+                case "/api/test-telegram":
+                    await HandleTestTelegram(ctx);
+                    break;
                 case "/":
                     await HandleFile(ctx, _htmlPath, "text/html");
                     break;
@@ -77,6 +90,27 @@ public sealed class WebServer : IDisposable
         ctx.Response.ContentType = "application/json";
         ctx.Response.Headers.Add("Access-Control-Allow-Origin", "*");
         var buf = System.Text.Encoding.UTF8.GetBytes(json);
+        await ctx.Response.OutputStream.WriteAsync(buf);
+        ctx.Response.Close();
+    }
+
+    private async Task HandleTestTelegram(HttpListenerContext ctx)
+    {
+        ctx.Response.ContentType = "application/json";
+        ctx.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+
+        string response;
+        if (_alertService == null)
+        {
+            response = JsonSerializer.Serialize(new { ok = false, error = "Alert service not available" });
+        }
+        else
+        {
+            bool sent = _alertService.SendTestTelegram();
+            response = JsonSerializer.Serialize(new { ok = sent });
+        }
+
+        var buf = System.Text.Encoding.UTF8.GetBytes(response);
         await ctx.Response.OutputStream.WriteAsync(buf);
         ctx.Response.Close();
     }

@@ -486,7 +486,27 @@
     if (celsius === null || celsius === undefined) return '--';
     return Math.round(celsius * 10) / 10;
   }
-  
+
+  // Test Telegram bot
+  function testTelegram() {
+    fetch('/api/test-telegram')
+      .then(r => r.json())
+      .then(d => {
+        const msg = safeGetElement('rainAlertMsg');
+        if (msg) {
+          msg.innerHTML = d.ok ? '✅ Telegram test sent!' : '⚠️ Telegram failed: ' + (d.error || 'unknown');
+          msg.style.background = d.ok ? "#dbeafe" : "#fee";
+        }
+      })
+      .catch(() => {
+        const msg = safeGetElement('rainAlertMsg');
+        if (msg) {
+          msg.innerHTML = '⚠️ Telegram not available';
+          msg.style.background = "#fee";
+        }
+      });
+  }
+
   // Update rain tags display
   function updateRainTags(rainLabel, confidence) {
     const rainyTag = safeGetElement('rainTagRainy');
