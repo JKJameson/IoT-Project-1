@@ -258,9 +258,9 @@
       <span>🌡️ RealFeel <strong id="realFeelVal">--</strong>°</span>
     </div>
     <div class="extra-details">
-      <div class="detail-item"><span class="detail-label">Pressure</span><span class="detail-value" id="pressureVal">-- hPa</span></div>
-      <div class="detail-item"><span class="detail-label">Humidity</span><span class="detail-value" id="humidityVal">--%</span></div>
-      <div class="detail-item"><span class="detail-label">Dew Point</span><span class="detail-value" id="dewPointVal">--°C</span></div>
+      <div class="detail-item"><span class="detail-label">📊 Pressure</span><span class="detail-value" id="pressureVal">-- hPa</span></div>
+      <div class="detail-item"><span class="detail-label">💧 Humidity</span><span class="detail-value" id="humidityVal">--%</span></div>
+      <div class="detail-item"><span class="detail-label">🌫️ Dew Point</span><span class="detail-value" id="dewPointVal">--°C</span></div>
     </div>
   </div>
 
@@ -293,55 +293,7 @@
   let isRaining = false;
   let lastNotificationTime = 0;
   const NOTIFICATION_COOLDOWN = 300000; // 5 minutes cooldown between same type notifications
-  
-  // Pressure trend tracking
-  let previousPressure = null;
-  let previousPressureTime = null;
-  let currentTrend = 0;
-  
-  // 🔴🔴🔴 SET YOUR EMAIL ADDRESS HERE 🔴🔴🔴
-  const YOUR_EMAIL = "your-email@gmail.com";  // <-- CHANGE THIS TO YOUR EMAIL
-  
-  // Safe DOM element getter with null check
-  function safeGetElement(id) {
-    const element = document.getElementById(id);
-    if (!element) {
-      console.warn(`Element with id "${id}" not found`);
-    }
-    return element;
-  }
-  
-  // Safe innerHTML setter
-  function safeSetHTML(id, value) {
-    const element = safeGetElement(id);
-    if (element) {
-      element.innerHTML = value;
-    }
-  }
-  
-  // Calculate pressure trend from historical data
-  function calculatePressureTrend(currentPressure) {
-    const now = new Date();
-    
-    if (previousPressure !== null && previousPressureTime !== null) {
-      // Calculate time difference in hours
-      const timeDiffHours = (now - previousPressureTime) / (1000 * 60 * 60);
-      
-      if (timeDiffHours > 0) {
-        // Calculate change in pressure per hour
-        const pressureChange = currentPressure - previousPressure;
-        const trendPerHour = pressureChange / timeDiffHours;
-        currentTrend = trendPerHour;
-      }
-    }
-    
-    // Update previous values for next calculation
-    previousPressure = currentPressure;
-    previousPressureTime = now;
-    
-    return currentTrend;
-  }
-  
+
   // Helper function to get pressure trend display
   function getPressureTrendDisplay(trend) {
     if (trend === null || trend === undefined || trend === 0) {
@@ -549,13 +501,8 @@
         const rainLabelRaw = data.rainLabel || (data.rainConfidence !== undefined ? (data.rainConfidence > 30 ? 'Rain possible' : 'No rain') : 'No rain');
         const rainConfidence = (data.rainConfidence !== undefined && data.rainConfidence !== null) ? data.rainConfidence : 0;
         const updatedAtRaw = data.updatedAt ? new Date(data.updatedAt) : new Date();
-        
-        // Calculate pressure trend from pressure changes
-        let pressureTrend = null;
-        if (pressureHpa !== null) {
-          pressureTrend = calculatePressureTrend(pressureHpa);
-        }
-        
+        const pressureTrend = data.pressureTrendHpaPerHour !== undefined ? data.pressureTrendHpaPerHour : null;
+
         // CRITICAL: Check for rain changes and trigger notifications
         checkRainChange(rainConfidence, rainLabelRaw, tempC, humidityRaw);
         
