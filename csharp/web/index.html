@@ -256,6 +256,18 @@
     </div>
   </div>
 
+  <div class="rain-section">
+    <div class="rain-badge-row">
+      <span class="rain-label" id="rainStatusLabel">🌧️ Chance of Rain</span>
+      <span class="rain-percent" id="rainPercentDisplay">0%</span>
+    </div>
+    <div class="rain-tags">
+      <span class="tag" id="rainTagRainy">🌧️ Rainy</span>
+      <span class="tag" id="rainTagSunny">☀️ Sunny</span>
+      <span class="tag" id="rainTagHeavy">⛈️ Heavy</span>
+    </div>
+  </div>
+
   <div class="today-card">
     <div class="temp-row">
       <div class="temp-big">
@@ -276,18 +288,6 @@
     <div class="section-title">🌧️ Rain Alerts</div>
     <div class="alert-trigger rain-notification" id="rainAlertMsg">
       🌧️ Rain monitor active: Will notify when rain starts or stops
-    </div>
-  </div>
-
-  <div class="rain-section">
-    <div class="rain-badge-row">
-      <span class="rain-label">🌧️ Chance of Rain</span>
-      <span class="rain-percent" id="rainPercentDisplay">0%</span>
-    </div>
-    <div class="rain-tags">
-      <span class="tag" id="rainTagRainy">🌧️ Rainy</span>
-      <span class="tag" id="rainTagSunny">☀️ Sunny</span>
-      <span class="tag" id="rainTagHeavy">⛈️ Heavy</span>
     </div>
   </div>
 
@@ -495,6 +495,11 @@
     const isRainy = labelLower.includes('rain') || (confidence > 30 && !labelLower.includes('no'));
     const isHeavy = labelLower.includes('heavy') || (confidence > 70 && labelLower.includes('rain'));
     const isSunny = labelLower.includes('no rain') || (confidence < 20 && !isRainy);
+
+    // Keep labels in sync with changing values
+    rainyTag.textContent = `🌧️ Rainy ${confidence >= 30 ? `(${confidence}%)` : ''}`.trim();
+    sunnyTag.textContent = `☀️ Sunny ${confidence <= 20 ? '(Likely)' : ''}`.trim();
+    heavyTag.textContent = `⛈️ Heavy ${confidence >= 70 ? `(${confidence}%)` : ''}`.trim();
     
     [rainyTag, sunnyTag, heavyTag].forEach(t => { t.style.opacity = '0.5'; t.style.fontWeight = 'normal'; });
     if (isHeavy) {
@@ -582,6 +587,7 @@
           finalRainLabel = "No rain";
           finalConfidence = 0;
         }
+        safeSetHTML('rainStatusLabel', `🌧️ ${finalRainLabel}`);
         safeSetHTML('rainPercentDisplay', `${finalConfidence}%`);
         updateRainTags(finalRainLabel, finalConfidence);
         
