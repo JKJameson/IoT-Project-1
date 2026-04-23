@@ -294,6 +294,23 @@
   let lastNotificationTime = 0;
   const NOTIFICATION_COOLDOWN = 300000; // 5 minutes cooldown between same type notifications
 
+  // Safe DOM element getter with null check
+  function safeGetElement(id) {
+    const element = document.getElementById(id);
+    if (!element) {
+      console.warn(`Element with id "${id}" not found`);
+    }
+    return element;
+  }
+
+  // Safe innerHTML setter
+  function safeSetHTML(id, value) {
+    const element = safeGetElement(id);
+    if (element) {
+      element.innerHTML = value;
+    }
+  }
+
   // Helper function to get pressure trend display
   function getPressureTrendDisplay(trend) {
     if (trend === null || trend === undefined || trend === 0) {
