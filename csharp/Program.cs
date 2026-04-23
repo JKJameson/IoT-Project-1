@@ -12,7 +12,7 @@ class Program {
         var sensorData = new SensorData();
 
         var htmlPath = Path.Combine(AppContext.BaseDirectory, "web", "index.html");
-        using var webServer = new WebServer(sensorData, htmlPath);
+        using var webServer = new WebServer(sensorData, alertService, htmlPath);
         webServer.Start();
 
         // ── Startup sequence ─────────────────────────────────────────────────
