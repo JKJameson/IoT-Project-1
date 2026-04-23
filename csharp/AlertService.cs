@@ -1,11 +1,14 @@
 using System.Net;
 using System.Net.Mail;
+using System.Net.Http;
+using System.Text.Json;
 
 public sealed class AlertService
 {
     private readonly string _emailTo;
     private readonly TimeSpan _cooldown;
     private readonly object _lock = new();
+    private readonly HttpClient _http = new();
 
     private bool _isRaining;
     private DateTime _lastNotificationTime = DateTime.MinValue;
@@ -38,6 +41,7 @@ public sealed class AlertService
                     _lastNotificationType = "start";
                     SendEmail("🌧️ RAIN STARTED at your weather station",
                         $"Rain has started!\n\nConfidence: {prediction.ConfidencePct}%\nTemperature: {tempC}°C\nHumidity: {humidity}%\nTime: {DateTime.Now:g}\n\nPlease take necessary precautions.");
+                    SendTelegram($"🌧️ RAIN STARTED!\n\nConfidence: {prediction.ConfidencePct}%\nTemp: {tempC}°C | Humidity: {humidity}%\nTime: {DateTime.Now:HH:mm}");
                 }
             }
             else if (!isNowRaining && wasRaining)
@@ -51,6 +55,7 @@ public sealed class AlertService
                     _lastNotificationType = "stop";
                     SendEmail("☀️ RAIN STOPPED at your weather station",
                         $"Rain has stopped!\n\nLast confidence: {prediction.ConfidencePct}%\nTemperature: {tempC}°C\nHumidity: {humidity}%\nTime: {DateTime.Now:g}\n\nWeather is clearing up.");
+                    SendTelegram($"☀️ RAIN STOPPED\n\nLast confidence: {prediction.ConfidencePct}%\nTemp: {tempC}°C | Humidity: {humidity}%\nTime: {DateTime.Now:HH:mm}");
                 }
             }
             else
@@ -104,6 +109,37 @@ public sealed class AlertService
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Email error: {ex.Message}");
+        }
+    }
+
+    private async void SendTelegram(string message)
+    {
+        try
+        {
+            string? botToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN");
+            string? chatId = Environment.GetEnvironmentVariable("TELEGRAM_CHAT_ID");
+
+            if (string.IsNullOrEmpty(botToken) || string.IsNullOrEmpty(chatId))
+            {
+                Console.WriteLine($"📱 TELEGRAM WOULD BE SENT: {message}");
+                return;
+            }
+
+            var url = $"https://api.telegram.org/bot{botToken}/sendMessage";
+            var payload = new { chat_id = chatId, text = message };
+
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _http.PostAsync(url, content);
+            if (response.IsSuccessStatusCode)
+                Console.WriteLine("✅ Telegram message sent");
+            else
+                Console.WriteLine($"⚠️ Telegram error: {response.StatusCode}");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Telegram error: {ex.Message}");
         }
     }
 }
