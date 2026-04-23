@@ -74,7 +74,7 @@
       background: linear-gradient(145deg, #1b3b4f, #0f2c3b);
       border-radius: 36px;
       padding: 22px 24px;
-      margin: 16px 0 20px;
+      margin: 0 0 16px;
       color: white;
       box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.2);
     }
@@ -166,7 +166,7 @@
     }
 
     .rain-section {
-      margin: 20px 0 16px;
+      margin: 12px 0 12px;
     }
     .rain-badge-row {
       display: flex;
@@ -367,22 +367,22 @@
     const sunnyTag = safeGetElement('rainTagSunny');
     const heavyTag = safeGetElement('rainTagHeavy');
     if (!rainyTag || !sunnyTag || !heavyTag) return;
-    
+
     const labelLower = (rainLabel || '').toLowerCase();
-    const isRainy = labelLower.includes('rain') || (confidence > 30 && !labelLower.includes('no'));
-    const isHeavy = labelLower.includes('heavy') || (confidence > 70 && labelLower.includes('rain'));
-    const isSunny = labelLower.includes('no rain') || (confidence < 20 && !isRainy);
-    
+    const isNoRain = labelLower.includes('no rain') || labelLower === 'no rain';
+    const isHeavy = labelLower.includes('heavy');
+    const isSunny = isNoRain || (confidence < 20);
+
     [rainyTag, sunnyTag, heavyTag].forEach(t => { t.style.opacity = '0.5'; t.style.fontWeight = 'normal'; });
-    if (isHeavy) {
-      heavyTag.style.opacity = '1';
-      heavyTag.style.fontWeight = 'bold';
-    } else if (isRainy) {
-      rainyTag.style.opacity = '1';
-      rainyTag.style.fontWeight = 'bold';
-    } else if (isSunny) {
+    if (isNoRain) {
       sunnyTag.style.opacity = '1';
       sunnyTag.style.fontWeight = 'bold';
+    } else if (isHeavy) {
+      heavyTag.style.opacity = '1';
+      heavyTag.style.fontWeight = 'bold';
+    } else if (confidence > 30) {
+      rainyTag.style.opacity = '1';
+      rainyTag.style.fontWeight = 'bold';
     } else {
       rainyTag.style.opacity = '0.8';
     }
