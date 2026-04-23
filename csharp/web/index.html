@@ -19,7 +19,7 @@
     }
 
     .weather-app {
-      max-width: 520px;
+      max-width: 580px;
       margin: 0 auto;
       background: #ffffff;
       border-radius: 40px;
@@ -31,7 +31,7 @@
 
     .app-header {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
       align-items: baseline;
       flex-wrap: wrap;
       margin-bottom: 16px;
@@ -47,6 +47,13 @@
       -webkit-background-clip: text;
       color: transparent;
     }
+    .header-title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
     .update-badge {
       font-size: 0.7rem;
       background: #f0f4f9;
@@ -55,14 +62,8 @@
       color: #2c5a6e;
       font-weight: 500;
     }
-    .corner-datetime {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 6px;
-    }
     .corner-day {
-      font-size: 0.72rem;
+      font-size: 1rem;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: #5f7385;
@@ -243,9 +244,9 @@
 <body>
 <div class="weather-app">
   <div class="app-header">
-    <h1>🌤️ Weather Nest</h1>
-    <div class="corner-datetime">
-      <div class="corner-day" id="todayDayName">Tuesday</div>
+    <div class="header-title">
+      <h1>🌤️ Weather Nest</h1>
+      <div class="corner-day" id="todayDayName">Tuesday, Apr 23</div>
       <div class="update-badge" id="liveTimestamp">Updating...</div>
     </div>
   </div>
@@ -544,7 +545,8 @@
         
         const today = new Date();
         const weekdayName = today.toLocaleDateString(undefined, { weekday: 'long' });
-        safeSetHTML('todayDayName', weekdayName);
+        const shortDate = today.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        safeSetHTML('todayDayName', `${weekdayName}, ${shortDate}`);
 
         // Temperature and RealFeel
         if (tempC !== null) {
