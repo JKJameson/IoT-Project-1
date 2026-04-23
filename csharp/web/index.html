@@ -31,8 +31,9 @@
 
     .app-header {
       display: flex;
-      justify-content: flex-start;
+      justify-content: space-between;
       align-items: baseline;
+      column-gap: 16px;
       flex-wrap: wrap;
       margin-bottom: 16px;
       padding-bottom: 8px;
@@ -50,17 +51,20 @@
     .header-title {
       display: flex;
       align-items: baseline;
-      gap: 6px;
+      gap: 0;
       min-width: 0;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
     }
-    .header-title h1 {
-      margin-right: 12px;
+    .header-right {
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-end;
+      gap: 8px;
     }
     .update-badge {
       font-size: 0.7rem;
       background: #f0f4f9;
-      padding: 6px 12px;
+      padding: 6px 26px;
       border-radius: 60px;
       color: #2c5a6e;
       font-weight: 500;
@@ -77,7 +81,7 @@
       background: linear-gradient(145deg, #1b3b4f, #0f2c3b);
       border-radius: 36px;
       padding: 22px 24px;
-      margin: 0 0 16px;
+      margin: 16px 0 20px;
       color: white;
       box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.2);
     }
@@ -169,7 +173,7 @@
     }
 
     .rain-section {
-      margin: 12px 0 12px;
+      margin: 20px 0 16px;
     }
     .rain-badge-row {
       display: flex;
@@ -249,20 +253,10 @@
   <div class="app-header">
     <div class="header-title">
       <h1>🌤️ Weather Nest</h1>
+    </div>
+    <div class="header-right">
       <div class="corner-day" id="todayDayName">Tuesday, Apr 23</div>
       <div class="update-badge" id="liveTimestamp">Updating...</div>
-    </div>
-  </div>
-
-  <div class="rain-section">
-    <div class="rain-badge-row">
-      <span class="rain-label">🌧️ Chance of Rain</span>
-      <span class="rain-percent" id="rainPercentDisplay">0%</span>
-    </div>
-    <div class="rain-tags">
-      <span class="tag" id="rainTagRainy">🌧️ Rainy</span>
-      <span class="tag" id="rainTagSunny">☀️ Sunny</span>
-      <span class="tag" id="rainTagHeavy">⛈️ Heavy</span>
     </div>
   </div>
 
@@ -287,12 +281,29 @@
     </div>
   </div>
 
+  <div class="rain-section">
+    <div class="rain-badge-row">
+      <span class="rain-label">🌧️ Chance of Rain</span>
+      <span class="rain-percent" id="rainPercentDisplay">0%</span>
+    </div>
+    <div class="rain-tags">
+      <span class="tag" id="rainTagRainy">🌧️ Rainy</span>
+      <span class="tag" id="rainTagSunny">☀️ Sunny</span>
+      <span class="tag" id="rainTagHeavy">⛈️ Heavy</span>
+    </div>
+  </div>
+
   <div class="footer-note" id="systemMessage">
     ✅ Live rain detection • auto-refresh every 2s
   </div>
 </div>
 
 <script>
+  // Rain state tracking
+  let isRaining = false;
+  let lastNotificationTime = 0;
+  const NOTIFICATION_COOLDOWN = 300000; // 5 minutes cooldown between same type notifications
+
   // Safe DOM element getter with null check
   function safeGetElement(id) {
     const element = document.getElementById(id);
@@ -349,15 +360,126 @@
     };
   }
   
-// Helper: Show browser notification
-  function showBrowserNotification(title, message, type) {
+  // Helper: Show notification popup
+  function showNotification(title, message, type) {
+    // Remove existing notification
+    const existingNotif = document.querySelector('.notification-banner');
+    if (existingNotif) existingNotif.remove();
+    
+    // Create notification element
+    const notif = document.createElement('div');
+    notif.className = `notification-banner ${type === 'start' ? 'rain-start' : 'rain-stop'}`;
+    notif.innerHTML = `
+      <strong style="display: block; margin-bottom: 5px;">${title}</strong>
+      <span style="font-size: 0.9rem;">${message}</span>
+      <small style="display: block; margin-top: 8px; opacity: 0.7;">${new Date().toLocaleTimeString()}</small>
+    `;
+    document.body.appendChild(notif);
+    
+    // Auto remove after 8 seconds
+    setTimeout(() => {
+      if (notif && notif.remove) notif.remove();
+    }, 8000);
+    
+    // Also show browser notification if permitted
     if (Notification.permission === 'granted') {
       new Notification(title, { body: message, icon: type === 'start' ? '🌧️' : '☀️' });
     } else if (Notification.permission !== 'denied') {
       Notification.requestPermission();
     }
   }
-
+  
+  // Function to send email notification
+  function sendEmailNotification(rainStatus, confidence, temperature, humidity) {
+    const subject = rainStatus === 'start' ? '🌧️ RAIN STARTED at your weather station' : '☀️ RAIN STOPPED at your weather station';
+    const body = rainStatus === 'start' 
+      ? `Rain has started!\n\nConfidence: ${confidence}%\nTemperature: ${temperature}°C\nHumidity: ${humidity}%\nTime: ${new Date().toLocaleString()}\n\nPlease take necessary precautions.`
+      : `Rain has stopped!\n\nLast confidence: ${confidence}%\nTemperature: ${temperature}°C\nHumidity: ${humidity}%\nTime: ${new Date().toLocaleString()}\n\nWeather is clearing up.`;
+    
+    // For testing - show console log
+    console.log(`📧 EMAIL WOULD BE SENT TO: ${YOUR_EMAIL}`);
+    console.log(`Subject: ${subject}`);
+    console.log(`Body: ${body}`);
+    
+    // OPTION: If you have a backend email endpoint, uncomment this:
+    /*
+    fetch('/api/send-rain-alert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        status: rainStatus, 
+        confidence: confidence,
+        temperature: temperature,
+        humidity: humidity,
+        to_email: YOUR_EMAIL
+      })
+    }).catch(err => console.log('Email endpoint not configured:', err));
+    */
+  }
+  
+  // Main rain detection logic
+  function checkRainChange(rainConfidence, rainLabel, tempC, humidity) {
+    const now = Date.now();
+    const isCurrentlyRaining = (rainConfidence > 30) || 
+                               (rainLabel && rainLabel.toLowerCase().includes('rain') && !rainLabel.toLowerCase().includes('no'));
+    
+    // RAIN STARTED
+    if (isCurrentlyRaining && !isRaining) {
+      isRaining = true;
+      
+      // Update UI
+      const alertDiv = safeGetElement('rainAlertMsg');
+      if (alertDiv) {
+        alertDiv.innerHTML = `🌧️⚠️ RAIN STARTED! (${rainConfidence}% confidence) - ${new Date().toLocaleTimeString()}`;
+        alertDiv.style.background = "#dbeafe";
+        alertDiv.style.borderLeftColor = "#0284c7";
+      }
+      
+      // Check cooldown
+      if (now - lastNotificationTime > NOTIFICATION_COOLDOWN) {
+        lastNotificationTime = now;
+        
+        // Show visual notification
+        showNotification(
+          '🌧️ Rain Started!', 
+          `Rain detected with ${rainConfidence}% confidence. Take precautions!`,
+          'start'
+        );
+        
+        // Send email
+        sendEmailNotification('start', rainConfidence, tempC, humidity);
+      }
+    }
+    
+    // RAIN STOPPED
+    else if (!isCurrentlyRaining && isRaining) {
+      isRaining = false;
+      
+      // Update UI
+      const alertDiv = safeGetElement('rainAlertMsg');
+      if (alertDiv) {
+        alertDiv.innerHTML = `☀️ Rain stopped. Weather clearing. Last confidence: ${rainConfidence}% - ${new Date().toLocaleTimeString()}`;
+        alertDiv.style.background = "#fef3c7";
+        alertDiv.style.borderLeftColor = "#f59e0b";
+      }
+      
+      // Check cooldown
+      if (now - lastNotificationTime > NOTIFICATION_COOLDOWN) {
+        lastNotificationTime = now;
+        
+        // Show visual notification
+        showNotification(
+          '☀️ Rain Stopped', 
+          `Rain has ended. ${rainConfidence > 0 ? `Last confidence was ${rainConfidence}%.` : 'Weather is clearing up!'}`,
+          'stop'
+        );
+        
+        // Send email
+        sendEmailNotification('stop', rainConfidence, tempC, humidity);
+      }
+    }
+  }
+  
   // Format temperature
   function formatTemp(celsius) {
     if (celsius === null || celsius === undefined) return '--';
@@ -370,22 +492,22 @@
     const sunnyTag = safeGetElement('rainTagSunny');
     const heavyTag = safeGetElement('rainTagHeavy');
     if (!rainyTag || !sunnyTag || !heavyTag) return;
-
+    
     const labelLower = (rainLabel || '').toLowerCase();
-    const isNoRain = labelLower.includes('no rain') || labelLower === 'no rain';
-    const isHeavy = labelLower.includes('heavy');
-    const isSunny = isNoRain || (confidence < 20);
-
+    const isRainy = labelLower.includes('rain') || (confidence > 30 && !labelLower.includes('no'));
+    const isHeavy = labelLower.includes('heavy') || (confidence > 70 && labelLower.includes('rain'));
+    const isSunny = labelLower.includes('no rain') || (confidence < 20 && !isRainy);
+    
     [rainyTag, sunnyTag, heavyTag].forEach(t => { t.style.opacity = '0.5'; t.style.fontWeight = 'normal'; });
-    if (isNoRain) {
-      sunnyTag.style.opacity = '1';
-      sunnyTag.style.fontWeight = 'bold';
-    } else if (isHeavy) {
+    if (isHeavy) {
       heavyTag.style.opacity = '1';
       heavyTag.style.fontWeight = 'bold';
-    } else if (confidence > 30) {
+    } else if (isRainy) {
       rainyTag.style.opacity = '1';
       rainyTag.style.fontWeight = 'bold';
+    } else if (isSunny) {
+      sunnyTag.style.opacity = '1';
+      sunnyTag.style.fontWeight = 'bold';
     } else {
       rainyTag.style.opacity = '0.8';
     }
@@ -408,30 +530,9 @@
         const updatedAtRaw = data.updatedAt ? new Date(data.updatedAt) : new Date();
         const pressureTrend = data.pressureTrendHpaPerHour !== undefined ? data.pressureTrendHpaPerHour : null;
 
-        // Update rain alert from server
-        const rainAlertMsg = safeGetElement('rainAlertMsg');
-        if (rainAlertMsg) {
-          rainAlertMsg.innerHTML = data.rainAlertMessage || '🌧️ Rain monitor active: Will notify when rain starts or stops';
-          if (data.isRaining) {
-            rainAlertMsg.style.background = "#dbeafe";
-            rainAlertMsg.style.borderLeftColor = "#0284c7";
-          } else {
-            rainAlertMsg.style.background = "#fff6e5";
-            rainAlertMsg.style.borderLeftColor = "#f4b942";
-          }
-        }
-
-        // Show browser notification on state change
-        const wasRaining = window._wasRaining;
-        if (wasRaining !== undefined && wasRaining !== data.isRaining) {
-          if (data.isRaining) {
-            showBrowserNotification('🌧️ Rain Started!', `Rain detected. Take precautions!`, 'start');
-          } else {
-            showBrowserNotification('☀️ Rain Stopped', 'Weather is clearing up.', 'stop');
-          }
-        }
-        window._wasRaining = data.isRaining;
-
+        // CRITICAL: Check for rain changes and trigger notifications
+        checkRainChange(rainConfidence, rainLabelRaw, tempC, humidityRaw);
+        
         // Update UI - RealFeel calculation
         let realFeel = tempC;
         if (tempC !== null && humidityRaw !== null) {
@@ -490,7 +591,7 @@
         
         // Footer message with trend info
         let trendEmoji = trendDisplay.arrow || '→';
-        safeSetHTML('systemMessage', `✅ Rain monitoring active • ${data.isRaining ? '🌧️ RAINING NOW' : '☀️ NO RAIN'} • Pressure: ${trendEmoji} ${trendDisplay.direction} • Updates every 2s`);
+        safeSetHTML('systemMessage', `✅ Rain monitoring active • ${isRaining ? '🌧️ RAINING NOW' : '☀️ NO RAIN'} • Pressure: ${trendEmoji} ${trendDisplay.direction} • Updates every 2s`);
       })
       .catch(error => {
         console.warn("Fetch error", error);
