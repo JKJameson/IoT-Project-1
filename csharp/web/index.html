@@ -55,6 +55,19 @@
       color: #2c5a6e;
       font-weight: 500;
     }
+    .corner-datetime {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+    .corner-day {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #5f7385;
+      font-weight: 600;
+    }
 
     .today-card {
       background: linear-gradient(145deg, #1b3b4f, #0f2c3b);
@@ -231,12 +244,13 @@
 <div class="weather-app">
   <div class="app-header">
     <h1>🌤️ Weather Nest</h1>
-    <div class="update-badge" id="liveTimestamp">Updating...</div>
+    <div class="corner-datetime">
+      <div class="corner-day" id="todayDayName">Tuesday</div>
+      <div class="update-badge" id="liveTimestamp">Updating...</div>
+    </div>
   </div>
 
   <div class="today-card">
-    <div class="day-name" id="todayDayName">Tuesday</div>
-    <div class="time-stamp" id="currentClock">--:-- --</div>
     <div class="temp-big">
       <span id="bigTemp">--</span><span>°</span>
     </div>
@@ -567,8 +581,7 @@
         const today = new Date();
         const weekdayName = today.toLocaleDateString(undefined, { weekday: 'long' });
         safeSetHTML('todayDayName', weekdayName);
-        safeSetHTML('currentClock', today.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' }) + ' • live');
-        
+
         // Temperature and RealFeel
         if (tempC !== null) {
           safeSetHTML('bigTemp', formatTemp(tempC));
