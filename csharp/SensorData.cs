@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 public sealed class SensorData
 {
     private readonly object _lock = new();
-    private readonly TemperatureHistory _tempHistory = new();
+    private readonly TemperatureHistory _tempHistory;
     private float _tempC;
     private float _humidity;
     private float? _pressureHpa;
@@ -16,6 +16,11 @@ public sealed class SensorData
     private string _rainAlertMessage = "🌧️ Rain monitor active: Will notify when rain starts or stops";
     private bool _isRaining;
     private DateTime _updatedAt;
+
+    public SensorData(string dataDir)
+    {
+        _tempHistory = new TemperatureHistory(dataDir);
+    }
 
     public void Update(float tempC, float humidity, float? pressureHpa, float? pressureTempC,
                        RainPrediction prediction, string rainAlertMessage, bool isRaining)

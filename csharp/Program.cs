@@ -9,7 +9,8 @@ class Program {
         string emailTo = Environment.GetEnvironmentVariable("ALERT_EMAIL") ?? "your-email@gmail.com";
         var alertService = new AlertService(emailTo);
 
-        var sensorData = new SensorData();
+        string dataDir = Path.Combine(AppContext.BaseDirectory, "data");
+        var sensorData = new SensorData(dataDir);
 
         var htmlPath = Path.Combine(AppContext.BaseDirectory, "web", "index.html");
         using var webServer = new WebServer(sensorData, alertService, htmlPath);
