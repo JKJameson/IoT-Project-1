@@ -129,13 +129,40 @@
       text-align: center;
       flex: 1;
     }
-    .detail-label {
+.detail-label {
       font-size: 0.7rem;
       opacity: 0.7;
     }
-    .detail-value {
+
+    .sparkline-card {
+      background: #f8fafd;
+      border-radius: 28px;
+      padding: 14px 16px;
+      margin: 0 0 14px;
+      border: 1px solid #eef2f8;
+    }
+    .sparkline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .sparkline-title {
+      font-size: 0.75rem;
       font-weight: 600;
-      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #5d7b8c;
+    }
+    .sparkline-range {
+      font-size: 0.7rem;
+      color: #6e8ea0;
+      font-weight: 500;
+    }
+    #tempSparkline {
+      width: 100%;
+      height: 60px;
+      display: block;
     }
 
     .device-panel {
@@ -282,6 +309,14 @@
       <div class="detail-item"><span class="detail-label">💧 Humidity</span><span class="detail-value" id="humidityVal">--%</span></div>
       <div class="detail-item"><span class="detail-label">🌫️ Dew Point</span><span class="detail-value" id="dewPointVal">--°C</span></div>
     </div>
+  </div>
+
+  <div class="sparkline-card">
+    <div class="sparkline-header">
+      <span class="sparkline-title">📈 Temperature (7 days)</span>
+      <span class="sparkline-range" id="tempRange">-- - --°C</span>
+    </div>
+    <canvas id="tempSparkline" width="440" height="60"></canvas>
   </div>
 
   <div class="device-panel">
@@ -487,6 +522,71 @@
     return Math.round(celsius * 10) / 10;
   }
 
+  // Draw temperature sparkline
+  function drawSparkline() {
+    fetch('/api/temperature-history')
+      .then(r => r.json())
+      .then(data => {
+        if (!data || data.length === 0) return;
+
+        const canvas = document.getElementById('tempSparkline');
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+
+        // Downsample to ~100 points for sparkline
+        const step = Math.max(1, Math.floor(data.length / 100));
+        const points = data.filter((_, i) => i % step === 0);
+
+        if (points.length < 2) return;
+
+        const temps = points.map(p => p.tempC);
+        const min = Math.min(...temps);
+        const max = Math.max(...temps);
+        const range = max - min || 1;
+
+        // Update range display
+        safeSetHTML('tempRange', `${formatTemp(min)} - ${formatTemp(max)}°C`);
+
+        // Clear canvas
+        ctx.clearRect(0, 0, w, h);
+
+        // Draw gradient fill
+        const gradient = ctx.createLinearGradient(0, 0, 0, h);
+        gradient.addColorStop(0, 'rgba(30, 111, 92, 0.3)');
+        gradient.addColorStop(1, 'rgba(30, 111, 92, 0.0)');
+
+        const pad = 4;
+        const xStep = (w - pad * 2) / (points.length - 1);
+
+        ctx.beginPath();
+        ctx.moveTo(pad + xStep * 0, h - pad - ((points[0].tempC - min) / range) * (h - pad * 2));
+        points.forEach((p, i) => {
+          const x = pad + xStep * i;
+          const y = h - pad - ((p.tempC - min) / range) * (h - pad * 2);
+          ctx.lineTo(x, y);
+        });
+        ctx.lineTo(pad + xStep * (points.length - 1), h);
+        ctx.lineTo(pad, h);
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // Draw line
+        ctx.beginPath();
+        ctx.moveTo(pad + xStep * 0, h - pad - ((points[0].tempC - min) / range) * (h - pad * 2));
+        points.forEach((p, i) => {
+          const x = pad + xStep * i;
+          const y = h - pad - ((p.tempC - min) / range) * (h - pad * 2);
+          ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = '#1e6f5c';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      })
+      .catch(() => {});
+  }
+
   // Test Telegram bot
   function testTelegram() {
     fetch('/api/test-telegram')
@@ -630,6 +730,10 @@
   // Initial call and interval (2 seconds)
   refreshDashboard();
   setInterval(refreshDashboard, 2000);
+
+  // Load temperature sparkline
+  drawSparkline();
+  setInterval(drawSparkline, 60000); // Update every minute
 </script>
 </body>
 </html>

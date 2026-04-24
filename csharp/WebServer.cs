@@ -62,6 +62,9 @@ public sealed class WebServer : IDisposable
                 case "/api/test-telegram":
                     await HandleTestTelegram(ctx);
                     break;
+                case "/api/temperature-history":
+                    await HandleTempHistory(ctx);
+                    break;
                 case "/":
                     await HandleFile(ctx, _htmlPath, "text/html");
                     break;
@@ -111,6 +114,22 @@ public sealed class WebServer : IDisposable
         }
 
         var buf = System.Text.Encoding.UTF8.GetBytes(response);
+        await ctx.Response.OutputStream.WriteAsync(buf);
+        ctx.Response.Close();
+    }
+
+    private async Task HandleTempHistory(HttpListenerContext ctx)
+    {
+        var history = _data.GetTemperatureHistory(168); // 7 days
+        var json = JsonSerializer.Serialize(history, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false,
+        });
+
+        ctx.Response.ContentType = "application/json";
+        ctx.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+        var buf = System.Text.Encoding.UTF8.GetBytes(json);
         await ctx.Response.OutputStream.WriteAsync(buf);
         ctx.Response.Close();
     }

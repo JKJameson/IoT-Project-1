@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 public sealed class SensorData
 {
     private readonly object _lock = new();
+    private readonly TemperatureHistory _tempHistory = new();
     private float _tempC;
     private float _humidity;
     private float? _pressureHpa;
@@ -33,6 +34,7 @@ public sealed class SensorData
             _rainAlertMessage = rainAlertMessage;
             _isRaining = isRaining;
             _updatedAt = DateTime.UtcNow;
+            _tempHistory.AddReading(tempC);
         }
     }
 
@@ -56,6 +58,11 @@ public sealed class SensorData
                 UpdatedAt = _updatedAt,
             };
         }
+    }
+
+    public List<TemperatureReading> GetTemperatureHistory(int hours = 168)
+    {
+        return _tempHistory.GetReadings(hours);
     }
 }
 
