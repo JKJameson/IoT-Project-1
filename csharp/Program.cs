@@ -5,6 +5,7 @@ class Program {
         Console.WriteLine("Initialising display...");
         using var display = new Epd();
         var predictor = new RainPredictor();
+        var lightSensor = new LightSensor();
 
         string emailTo = Environment.GetEnvironmentVariable("ALERT_EMAIL") ?? "your-email@gmail.com";
         var alertService = new AlertService(emailTo);
@@ -33,7 +34,7 @@ class Program {
         if (ip != null)
             display.DrawText(24, 24, $"http://{ip.Address}", Font.F12, BLACK, WHITE);
 
-        string[] sensors = ["E-Paper Display", "DHT11 Temp/Humidity", "BMP280 Pressure"];
+        string[] sensors = ["E-Paper Display", "DHT11 Temp/Humidity", "BMP280 Pressure", "Light Sensor"];
         for (int i = 0; i < sensors.Length; i++)
             display.DrawText(lblX, (ushort)(sensorStartY + i * rowH), sensors[i], Font.F12, BLACK, WHITE);
 
@@ -62,6 +63,23 @@ class Program {
         display.DisplayPartial();
         Console.WriteLine($"BMP280: {(bmpOk ? "OK" : "FAIL")}");
 
+        // Init light sensor and check immediately
+        bool lightOk = false;
+        try
+        {
+            if (lightSensor.IsAvailable)
+            {
+                _ = lightSensor.Read();
+                lightOk = true;
+            }
+        }
+        catch (Exception e) { Console.Error.WriteLine($"LIGHT: {e.Message}"); }
+        display.DrawIcon(chkX, (ushort)(sensorStartY + rowH * 3), lightOk ? Icons.Check : Icons.Cross,
+                         (ushort)(lightOk ? Icons.CheckW : Icons.CrossW),
+                         (ushort)(lightOk ? Icons.CheckH : Icons.CrossH));
+        display.DisplayPartial();
+        Console.WriteLine($"LIGHT: {(lightOk ? "OK" : "FAIL")}");
+
         // Hold the startup screen for 1.5s
         Thread.Sleep(1500);
 
@@ -78,10 +96,12 @@ class Program {
         const ushort line4Y = 72;
         const ushort line5Y = 88;
         const ushort line6Y = 104;
+        const ushort line7Y = 120;
+        const ushort line8Y = 136;
         const ushort screenW = 244, screenH = 16;
         Dht11.Reading dht11Reading;
         float tempC, humidity;
-        string line3, line4, line5, line6;
+        string line3, line4, line5, line6, line7, line8;
 
         while (true)
         {
@@ -105,6 +125,34 @@ class Program {
 
             float? pressureHpa = null;
             float? pressureTempC = null;
+
+            string lightCondition = "N/A";
+            int? lightRaw = null;
+            try
+            {
+                if (lightSensor.IsAvailable)
+                {
+                    var lr = lightSensor.Read();
+                    lightRaw = lr.RawValue;
+                    lightCondition = lr.Condition;
+                }
+                else
+                {
+                    lightCondition = "Unavailable";
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"LIGHT: {e.Message}");
+                lightCondition = "Error";
+            }
+
+            line5 = lightRaw.HasValue
+                ? $"Light: {lightCondition} ({lightRaw.Value})"
+                : $"Light: {lightCondition}";
+
+            line6 = $"Day: {DateTime.Now:dddd}";
+
             try
             {
                 if (pressureSensor != null)
@@ -112,22 +160,22 @@ class Program {
                     var r = pressureSensor.Read();
                     pressureHpa = r.PressureHpa;
                     pressureTempC = r.TemperatureC;
-                    line5 = $"Pressure: {r.PressureHpa:F1}hPa ({r.TemperatureC:F1}C)";
+                    line7 = $"Pressure: {r.PressureHpa:F1}hPa ({r.TemperatureC:F1}C)";
                     predictor.AddPressureSample(r.PressureHpa);
                 }
                 else
                 {
-                    line5 = "-- pressure unavailable --";
+                    line7 = "-- pressure unavailable --";
                 }
             }
             catch (Exception e)
             {
                 Console.Error.WriteLine($"BMP280: {e.Message}");
-                line5 = "-- pressure error --";
+                line7 = "-- pressure error --";
             }
 
             var prediction = predictor.Predict(tempC, humidity, pressureHpa);
-            line6 = $"Rain: {prediction.Likelihood.Label()} (~{prediction.ConfidencePct}%)";
+            line8 = $"Rain: {prediction.Likelihood.Label()} (~{prediction.ConfidencePct}%)";
 
             var (alertMessage, isRaining) = alertService.CheckRainChange(prediction, tempC, humidity);
 
@@ -152,12 +200,20 @@ class Program {
             display.DrawText(textX, line4Y, line4, Font.F12, BLACK, WHITE);
 
             display.ClearWindow(iconX, line5Y, iconX + screenW, line5Y + screenH, WHITE);
-            display.DrawIcon(iconX, line5Y, Icons.Gauge, Icons.GaugeW, Icons.GaugeH);
+            display.DrawIcon(iconX, line5Y, Icons.Light, Icons.LightW, Icons.LightH);
             display.DrawText(textX, line5Y, line5, Font.F12, BLACK, WHITE);
 
             display.ClearWindow(iconX, line6Y, iconX + screenW, line6Y + screenH, WHITE);
-            display.DrawIcon(iconX, line6Y, Icons.Rain, Icons.RainW, Icons.RainH);
+            display.DrawIcon(iconX, line6Y, Icons.Day, Icons.DayW, Icons.DayH);
             display.DrawText(textX, line6Y, line6, Font.F12, BLACK, WHITE);
+
+            display.ClearWindow(iconX, line7Y, iconX + screenW, line7Y + screenH, WHITE);
+            display.DrawIcon(iconX, line7Y, Icons.Gauge, Icons.GaugeW, Icons.GaugeH);
+            display.DrawText(textX, line7Y, line7, Font.F12, BLACK, WHITE);
+
+            display.ClearWindow(iconX, line8Y, iconX + screenW, line8Y + screenH, WHITE);
+            display.DrawIcon(iconX, line8Y, Icons.Rain, Icons.RainW, Icons.RainH);
+            display.DrawText(textX, line8Y, line8, Font.F12, BLACK, WHITE);
 
             display.DisplayPartial();
 
@@ -165,6 +221,8 @@ class Program {
             Console.WriteLine(line4);
             Console.WriteLine(line5);
             Console.WriteLine(line6);
+            Console.WriteLine(line7);
+            Console.WriteLine(line8);
 
             Thread.Sleep(TimeSpan.FromSeconds(1));
         }
