@@ -92,16 +92,15 @@ class Program {
         const ushort iconX = 0, textX = 20;
         const ushort timeX = 24, timeY = 6;
         const ushort dateX = 24, dateY = 24;
-        const ushort line3Y = 56;
-        const ushort line4Y = 72;
-        const ushort line5Y = 88;
-        const ushort line6Y = 104;
-        const ushort line7Y = 120;
-        const ushort line8Y = 136;
+        const ushort line3Y = 40;
+        const ushort line4Y = 56;
+        const ushort line5Y = 72;
+        const ushort line6Y = 88;
+        const ushort line7Y = 104;
         const ushort screenW = 244, screenH = 16;
         Dht11.Reading dht11Reading;
         float tempC, humidity;
-        string line3, line4, line5, line6, line7, line8;
+        string line3, line4, line5, line6, line7;
 
         while (true)
         {
@@ -151,8 +150,6 @@ class Program {
                 ? $"Light: {lightCondition} ({lightRaw.Value})"
                 : $"Light: {lightCondition}";
 
-            line6 = $"Day: {DateTime.Now:dddd}";
-
             try
             {
                 if (pressureSensor != null)
@@ -160,22 +157,22 @@ class Program {
                     var r = pressureSensor.Read();
                     pressureHpa = r.PressureHpa;
                     pressureTempC = r.TemperatureC;
-                    line7 = $"Pressure: {r.PressureHpa:F1}hPa ({r.TemperatureC:F1}C)";
+                    line6 = $"Pressure: {r.PressureHpa:F1}hPa ({r.TemperatureC:F1}C)";
                     predictor.AddPressureSample(r.PressureHpa);
                 }
                 else
                 {
-                    line7 = "-- pressure unavailable --";
+                    line6 = "-- pressure unavailable --";
                 }
             }
             catch (Exception e)
             {
                 Console.Error.WriteLine($"BMP280: {e.Message}");
-                line7 = "-- pressure error --";
+                line6 = "-- pressure error --";
             }
 
             var prediction = predictor.Predict(tempC, humidity, pressureHpa);
-            line8 = $"Rain: {prediction.Likelihood.Label()} (~{prediction.ConfidencePct}%)";
+            line7 = $"Rain: {prediction.Likelihood.Label()} (~{prediction.ConfidencePct}%)";
 
             var (alertMessage, isRaining) = alertService.CheckRainChange(prediction, tempC, humidity);
 
@@ -204,15 +201,12 @@ class Program {
             display.DrawText(textX, line5Y, line5, Font.F12, BLACK, WHITE);
 
             display.ClearWindow(iconX, line6Y, iconX + screenW, line6Y + screenH, WHITE);
+            display.DrawIcon(iconX, line6Y, Icons.Gauge, Icons.GaugeW, Icons.GaugeH);
             display.DrawText(textX, line6Y, line6, Font.F12, BLACK, WHITE);
 
             display.ClearWindow(iconX, line7Y, iconX + screenW, line7Y + screenH, WHITE);
-            display.DrawIcon(iconX, line7Y, Icons.Gauge, Icons.GaugeW, Icons.GaugeH);
+            display.DrawIcon(iconX, line7Y, Icons.Rain, Icons.RainW, Icons.RainH);
             display.DrawText(textX, line7Y, line7, Font.F12, BLACK, WHITE);
-
-            display.ClearWindow(iconX, line8Y, iconX + screenW, line8Y + screenH, WHITE);
-            display.DrawIcon(iconX, line8Y, Icons.Rain, Icons.RainW, Icons.RainH);
-            display.DrawText(textX, line8Y, line8, Font.F12, BLACK, WHITE);
 
             display.DisplayPartial();
 
@@ -221,7 +215,6 @@ class Program {
             Console.WriteLine(line5);
             Console.WriteLine(line6);
             Console.WriteLine(line7);
-            Console.WriteLine(line8);
 
             Thread.Sleep(TimeSpan.FromSeconds(1));
         }
