@@ -63,7 +63,7 @@ class Program {
         display.DisplayPartial();
         Console.WriteLine($"BMP280: {(bmpOk ? "OK" : "FAIL")}");
 
-        // Init light sensor and check immediately
+        // Initiate light sensor and check immediately
         bool lightOk = false;
         try
         {
