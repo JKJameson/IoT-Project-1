@@ -91,7 +91,7 @@ class Program {
 
         const ushort iconX = 0, textX = 20;
         const ushort timeX = 24, timeY = 6;
-        const ushort dateX = 24, dateY = 24;
+        const ushort dateAfterTimeX = 86, dateAfterTimeY = 10;
         const ushort line3Y = 40;
         const ushort line4Y = 56;
         const ushort line5Y = 72;
@@ -184,9 +184,7 @@ class Program {
 
             display.ClearWindow(timeX, timeY, timeX + screenW, timeY + 16, WHITE);
             display.DrawText(timeX, timeY, timeText, Font.F16, BLACK, WHITE);
-
-            display.ClearWindow(dateX, dateY, dateX + screenW, dateY + 12, WHITE);
-            display.DrawText(dateX, dateY, dateText, Font.F12, BLACK, WHITE);
+            display.DrawText(dateAfterTimeX, dateAfterTimeY, dateText, Font.F12, BLACK, WHITE);
 
             display.ClearWindow(iconX, line3Y, iconX + screenW, line3Y + screenH, WHITE);
             display.DrawIcon(iconX, line3Y, Icons.Thermo, Icons.ThermoW, Icons.ThermoH);
