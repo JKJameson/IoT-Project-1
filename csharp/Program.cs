@@ -91,7 +91,8 @@ class Program {
 
         const ushort iconX = 0, textX = 20;
         const ushort timeX = 24, timeY = 6;
-        const ushort dateAfterTimeX = 86, dateAfterTimeY = 10;
+        const ushort dateY = 8;
+        const ushort headerRightEdgeX = 244;
         const ushort line3Y = 40;
         const ushort line4Y = 56;
         const ushort line5Y = 72;
@@ -180,11 +181,13 @@ class Program {
 
             var now = DateTime.Now;
             var timeText = now.ToString("HH:mm");
-            var dateText = now.ToString("dddd, dd MMM yyyy");
+            var dateText = now.ToString("ddd, dd MMM");
+            int dateXInt = headerRightEdgeX - (dateText.Length * 7);
+            ushort dateX = (ushort)Math.Max(timeX + 52, dateXInt);
 
             display.ClearWindow(timeX, timeY, timeX + screenW, timeY + 16, WHITE);
             display.DrawText(timeX, timeY, timeText, Font.F16, BLACK, WHITE);
-            display.DrawText(dateAfterTimeX, dateAfterTimeY, dateText, Font.F12, BLACK, WHITE);
+            display.DrawText(dateX, dateY, dateText, Font.F12, BLACK, WHITE);
 
             display.ClearWindow(iconX, line3Y, iconX + screenW, line3Y + screenH, WHITE);
             display.DrawIcon(iconX, line3Y, Icons.Thermo, Icons.ThermoW, Icons.ThermoH);
