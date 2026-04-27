@@ -72,6 +72,8 @@ class Program {
         display.DisplayBase();
 
         const ushort iconX = 0, textX = 20;
+        const ushort timeX = 24, timeY = 6;
+        const ushort dateX = 24, dateY = 24;
         const ushort line3Y = 56;
         const ushort line4Y = 72;
         const ushort line5Y = 88;
@@ -131,8 +133,15 @@ class Program {
 
             sensorData.Update(tempC, humidity, pressureHpa, pressureTempC, prediction, alertMessage, isRaining);
 
-            display.ClearWindow(24, 6, 24 + screenW, 6 + 16, WHITE);
-            display.DrawText(24, 6, DateTime.Now.ToString("HH:mm"), Font.F16, BLACK, WHITE);
+            var now = DateTime.Now;
+            var timeText = now.ToString("HH:mm");
+            var dateText = now.ToString("dddd, dd MMM yyyy");
+
+            display.ClearWindow(timeX, timeY, timeX + screenW, timeY + 16, WHITE);
+            display.DrawText(timeX, timeY, timeText, Font.F16, BLACK, WHITE);
+
+            display.ClearWindow(dateX, dateY, dateX + screenW, dateY + 12, WHITE);
+            display.DrawText(dateX, dateY, dateText, Font.F12, BLACK, WHITE);
 
             display.ClearWindow(iconX, line3Y, iconX + screenW, line3Y + screenH, WHITE);
             display.DrawIcon(iconX, line3Y, Icons.Thermo, Icons.ThermoW, Icons.ThermoH);
