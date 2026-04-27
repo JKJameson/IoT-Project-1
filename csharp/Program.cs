@@ -204,7 +204,6 @@ class Program {
             display.DrawText(textX, line5Y, line5, Font.F12, BLACK, WHITE);
 
             display.ClearWindow(iconX, line6Y, iconX + screenW, line6Y + screenH, WHITE);
-            display.DrawIcon(iconX, line6Y, Icons.Day, Icons.DayW, Icons.DayH);
             display.DrawText(textX, line6Y, line6, Font.F12, BLACK, WHITE);
 
             display.ClearWindow(iconX, line7Y, iconX + screenW, line7Y + screenH, WHITE);
