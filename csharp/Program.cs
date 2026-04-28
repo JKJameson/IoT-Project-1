@@ -5,7 +5,7 @@ class Program {
         Console.WriteLine("Initialising display...");
         using var display = new Epd();
         var predictor = new RainPredictor();
-        var lightSensor = new LightSensor();
+        var sunCalc = new SunTimesCalculator();
 
         string emailTo = Environment.GetEnvironmentVariable("ALERT_EMAIL") ?? "your-email@gmail.com";
         var alertService = new AlertService(emailTo);
@@ -34,7 +34,7 @@ class Program {
         if (ip != null)
             display.DrawText(24, 24, $"http://{ip.Address}", Font.F12, BLACK, WHITE);
 
-        string[] sensors = ["E-Paper Display", "DHT11 Temp/Humidity", "BMP280 Pressure", "Light Sensor"];
+        string[] sensors = ["E-Paper Display", "DHT11 Temp/Humidity", "BMP280 Pressure", "Sunrise/Sunset"];
         for (int i = 0; i < sensors.Length; i++)
             display.DrawText(lblX, (ushort)(sensorStartY + i * rowH), sensors[i], Font.F12, BLACK, WHITE);
 
@@ -63,22 +63,10 @@ class Program {
         display.DisplayPartial();
         Console.WriteLine($"BMP280: {(bmpOk ? "OK" : "FAIL")}");
 
-        // Initiate light sensor and check immediately
-        bool lightOk = false;
-        try
-        {
-            if (lightSensor.IsAvailable)
-            {
-                _ = lightSensor.Read();
-                lightOk = true;
-            }
-        }
-        catch (Exception e) { Console.Error.WriteLine($"LIGHT: {e.Message}"); }
-        display.DrawIcon(chkX, (ushort)(sensorStartY + rowH * 3), lightOk ? Icons.Check : Icons.Cross,
-                         (ushort)(lightOk ? Icons.CheckW : Icons.CrossW),
-                         (ushort)(lightOk ? Icons.CheckH : Icons.CrossH));
+        // Sunrise/sunset is calculated in software
+        display.DrawIcon(chkX, (ushort)(sensorStartY + rowH * 3), Icons.Check, Icons.CheckW, Icons.CheckH);
         display.DisplayPartial();
-        Console.WriteLine($"LIGHT: {(lightOk ? "OK" : "FAIL")}");
+        Console.WriteLine("SUN: OK");
 
         // Hold the startup screen for 1.5s
         Thread.Sleep(1500);
@@ -126,30 +114,9 @@ class Program {
             float? pressureHpa = null;
             float? pressureTempC = null;
 
-            string lightCondition = "N/A";
-            int? lightRaw = null;
-            try
-            {
-                if (lightSensor.IsAvailable)
-                {
-                    var lr = lightSensor.Read();
-                    lightRaw = lr.RawValue;
-                    lightCondition = lr.Condition;
-                }
-                else
-                {
-                    lightCondition = "Unavailable";
-                }
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine($"LIGHT: {e.Message}");
-                lightCondition = "Error";
-            }
-
-            line5 = lightRaw.HasValue
-                ? $"Light: {lightCondition} ({lightRaw.Value})"
-                : $"Light: {lightCondition}";
+            var today = DateTime.Today;
+            var sunTimes = sunCalc.GetSunriseSunset(today);
+            line5 = $"Sun: {sunTimes.Sunrise:HH:mm} / {sunTimes.Sunset:HH:mm}";
 
             try
             {
@@ -177,7 +144,16 @@ class Program {
 
             var (alertMessage, isRaining) = alertService.CheckRainChange(prediction, tempC, humidity);
 
-            sensorData.Update(tempC, humidity, pressureHpa, pressureTempC, prediction, alertMessage, isRaining);
+            sensorData.Update(
+                tempC,
+                humidity,
+                pressureHpa,
+                pressureTempC,
+                prediction,
+                alertMessage,
+                isRaining,
+                sunTimes.Sunrise.ToString("HH:mm"),
+                sunTimes.Sunset.ToString("HH:mm"));
 
             var now = DateTime.Now;
             var timeText = now.ToString("HH:mm");

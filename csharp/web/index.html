@@ -224,6 +224,13 @@
       color: #567d95;
       font-size: 0.8rem;
     }
+    .sun-times {
+      text-align: center;
+      margin-top: 8px;
+      color: #4f6f86;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
     .tag {
       background: #eef2f5;
       padding: 5px 12px;
@@ -293,6 +300,7 @@
       <span class="tag" id="rainTagSunny">☀️ Sunny</span>
       <span class="tag" id="rainTagHeavy">⛈️ Heavy</span>
     </div>
+    <div class="sun-times" id="sunTimesRow">🌅 Sunrise --:-- • 🌇 Sunset --:--</div>
   </div>
 
   <div class="today-card">
@@ -657,6 +665,8 @@
         const rainConfidence = (data.rainConfidence !== undefined && data.rainConfidence !== null) ? data.rainConfidence : 0;
         const updatedAtRaw = data.updatedAt ? new Date(data.updatedAt) : new Date();
         const pressureTrend = data.pressureTrendHpaPerHour !== undefined ? data.pressureTrendHpaPerHour : null;
+        const sunriseLocal = data.sunriseLocal || '--:--';
+        const sunsetLocal = data.sunsetLocal || '--:--';
 
         // CRITICAL: Check for rain changes and trigger notifications
         checkRainChange(rainConfidence, rainLabelRaw, tempC, humidityRaw);
@@ -715,6 +725,7 @@
         safeSetHTML('rainStatusLabel', `🌧️ ${finalRainLabel}`);
         safeSetHTML('rainPercentDisplay', `${finalConfidence}%`);
         updateRainTags(finalRainLabel, finalConfidence);
+        safeSetHTML('sunTimesRow', `🌅 Sunrise ${sunriseLocal} • 🌇 Sunset ${sunsetLocal}`);
         
         // Footer message with trend info
         let trendEmoji = trendDisplay.arrow || '→';

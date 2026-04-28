@@ -15,6 +15,8 @@ public sealed class SensorData
     private float? _pressureTrend;
     private string _rainAlertMessage = "🌧️ Rain monitor active: Will notify when rain starts or stops";
     private bool _isRaining;
+    private string _sunriseLocal = "--:--";
+    private string _sunsetLocal = "--:--";
     private DateTime _updatedAt;
 
     public SensorData(string dataDir)
@@ -23,7 +25,8 @@ public sealed class SensorData
     }
 
     public void Update(float tempC, float humidity, float? pressureHpa, float? pressureTempC,
-                       RainPrediction prediction, string rainAlertMessage, bool isRaining)
+                       RainPrediction prediction, string rainAlertMessage, bool isRaining,
+                       string sunriseLocal, string sunsetLocal)
     {
         lock (_lock)
         {
@@ -38,6 +41,8 @@ public sealed class SensorData
             _pressureTrend = prediction.PressureTrendHpaPerHour;
             _rainAlertMessage = rainAlertMessage;
             _isRaining = isRaining;
+            _sunriseLocal = sunriseLocal;
+            _sunsetLocal = sunsetLocal;
             _updatedAt = DateTime.UtcNow;
             _tempHistory.AddReading(tempC);
         }
@@ -60,6 +65,8 @@ public sealed class SensorData
                 PressureTrendHpaPerHour = _pressureTrend.HasValue ? MathF.Round(_pressureTrend.Value, 2) : null,
                 RainAlertMessage = _rainAlertMessage,
                 IsRaining = _isRaining,
+                SunriseLocal = _sunriseLocal,
+                SunsetLocal = _sunsetLocal,
                 UpdatedAt = _updatedAt,
             };
         }
@@ -84,5 +91,7 @@ public class Snapshot
     public float? PressureTrendHpaPerHour { get; set; }
     public string RainAlertMessage { get; set; } = "";
     public bool IsRaining { get; set; }
+    public string SunriseLocal { get; set; } = "--:--";
+    public string SunsetLocal { get; set; } = "--:--";
     public DateTime UpdatedAt { get; set; }
 }
