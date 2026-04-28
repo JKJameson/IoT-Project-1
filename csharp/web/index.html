@@ -433,30 +433,19 @@
     }
   }
   
-  // Send rain event to backend for Telegram alerts
+    // Send rain event to backend for Telegram alerts
   function sendEmailNotification(rainStatus, confidence, temperature, humidity) {
-    const subject = rainStatus === 'start' ? '🌧️ RAIN STARTED at your weather station' : '☀️ RAIN STOPPED at your weather station';
-    const body = rainStatus === 'start' 
-      ? `Rain has started!\n\nConfidence: ${confidence}%\nTemperature: ${temperature}°C\nHumidity: ${humidity}%\nTime: ${new Date().toLocaleString()}\n\nPlease take necessary precautions.`
-      : `Rain has stopped!\n\nLast confidence: ${confidence}%\nTemperature: ${temperature}°C\nHumidity: ${humidity}%\nTime: ${new Date().toLocaleString()}\n\nWeather is clearing up.`;
-    
-    // For testing - show console log
-    console.log(`📧 EMAIL WOULD BE SENT TO: ${YOUR_EMAIL}`);
-    console.log(`Subject: ${subject}`);
-    console.log(`Body: ${body}`);
-    
-    // OPTION: If you have a backend email endpoint, uncomment this:
-    /*
     fetch('/api/send-rain-alert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        status: rainStatus, 
+      body: JSON.stringify({
+        status: rainStatus,
         confidence: confidence,
         temperature: temperature,
-        humidity: humidity,
-        to_email: YOUR_EMAIL
+        humidity: humidity
       })
+    }).catch(err => console.log('Rain alert endpoint error:', err));
+  })
     }).catch(err => console.log('Email endpoint not configured:', err));
     */
   }
@@ -748,3 +737,4 @@
 </script>
 </body>
 </html>
+
