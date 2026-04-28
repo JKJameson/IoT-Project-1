@@ -160,4 +160,17 @@ public sealed class AlertService
     {
         return SendTelegramAsync("🧪 Weather Nest: Test message from your weather station!\nTime: " + DateTime.Now.ToString("g")).Result;
     }
+
+    public bool SendRainEventTelegram(string status, int confidence, float? temperatureC, float? humidity)
+    {
+        var safeStatus = (status ?? "").Trim().ToLowerInvariant();
+        var tempText = temperatureC.HasValue ? $"{temperatureC.Value:0.0}°C" : "N/A";
+        var humText = humidity.HasValue ? $"{humidity.Value:0.#}%" : "N/A";
+
+        string message = safeStatus == "start"
+            ? $"🌧️ RAIN STARTED!\n\nConfidence: {confidence}%\nTemp: {tempText} | Humidity: {humText}\nTime: {DateTime.Now:HH:mm}"
+            : $"☀️ RAIN STOPPED\n\nLast confidence: {confidence}%\nTemp: {tempText} | Humidity: {humText}\nTime: {DateTime.Now:HH:mm}";
+
+        return SendTelegramAsync(message).Result;
+    }
 }

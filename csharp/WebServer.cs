@@ -62,6 +62,9 @@ public sealed class WebServer : IDisposable
                 case "/api/test-telegram":
                     await HandleTestTelegram(ctx);
                     break;
+                case "/api/send-rain-alert":
+                    await HandleSendRainAlert(ctx);
+                    break;
                 case "/api/temperature-history":
                     await HandleTempHistory(ctx);
                     break;
@@ -113,6 +116,64 @@ public sealed class WebServer : IDisposable
             response = JsonSerializer.Serialize(new { ok = sent });
         }
 
+        var buf = System.Text.Encoding.UTF8.GetBytes(response);
+        await ctx.Response.OutputStream.WriteAsync(buf);
+        ctx.Response.Close();
+    }
+
+    private sealed class RainAlertRequest
+    {
+        public string Status { get; set; } = "";
+        public int Confidence { get; set; }
+        public float? Temperature { get; set; }
+        public float? Humidity { get; set; }
+    }
+
+    private async Task HandleSendRainAlert(HttpListenerContext ctx)
+    {
+        ctx.Response.ContentType = "application/json";
+        ctx.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+
+        if (_alertService == null)
+        {
+            ctx.Response.StatusCode = 503;
+            var unavailable = JsonSerializer.Serialize(new { ok = false, error = "Alert service not available" });
+            var unavailableBuf = System.Text.Encoding.UTF8.GetBytes(unavailable);
+            await ctx.Response.OutputStream.WriteAsync(unavailableBuf);
+            ctx.Response.Close();
+            return;
+        }
+
+        if (ctx.Request.HttpMethod != "POST")
+        {
+            ctx.Response.StatusCode = 405;
+            var methodErr = JsonSerializer.Serialize(new { ok = false, error = "Use POST" });
+            var methodErrBuf = System.Text.Encoding.UTF8.GetBytes(methodErr);
+            await ctx.Response.OutputStream.WriteAsync(methodErrBuf);
+            ctx.Response.Close();
+            return;
+        }
+
+        string body;
+        using (var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
+            body = await reader.ReadToEndAsync();
+
+        RainAlertRequest? payload = null;
+        try { payload = JsonSerializer.Deserialize<RainAlertRequest>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }); }
+        catch { }
+
+        if (payload == null || (payload.Status != "start" && payload.Status != "stop"))
+        {
+            ctx.Response.StatusCode = 400;
+            var badReq = JsonSerializer.Serialize(new { ok = false, error = "Invalid payload. status must be 'start' or 'stop'." });
+            var badReqBuf = System.Text.Encoding.UTF8.GetBytes(badReq);
+            await ctx.Response.OutputStream.WriteAsync(badReqBuf);
+            ctx.Response.Close();
+            return;
+        }
+
+        bool sent = _alertService.SendRainEventTelegram(payload.Status, payload.Confidence, payload.Temperature, payload.Humidity);
+        var response = JsonSerializer.Serialize(new { ok = sent });
         var buf = System.Text.Encoding.UTF8.GetBytes(response);
         await ctx.Response.OutputStream.WriteAsync(buf);
         ctx.Response.Close();
