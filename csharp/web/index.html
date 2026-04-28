@@ -433,7 +433,7 @@
     }
   }
   
-    // Send rain event to backend for Telegram alerts
+  // Send rain event to backend for Telegram alerts
   function sendEmailNotification(rainStatus, confidence, temperature, humidity) {
     fetch('/api/send-rain-alert', {
       method: 'POST',
@@ -445,9 +445,6 @@
         humidity: humidity
       })
     }).catch(err => console.log('Rain alert endpoint error:', err));
-  })
-    }).catch(err => console.log('Email endpoint not configured:', err));
-    */
   }
   
   // Main rain detection logic
