@@ -5,6 +5,7 @@ class Program {
         Console.WriteLine("Initialising display...");
         using var display = new Epd();
         var lightSensor = new LightSensor();
+        var sunTimes = new SunTimesCalculator();
 
         string emailTo = Environment.GetEnvironmentVariable("ALERT_EMAIL") ?? "your-email@gmail.com";
         var alertService = new AlertService(emailTo);
@@ -110,9 +111,20 @@ class Program {
         const ushort screenW = 244, screenH = 16;
         string line3, line4, line5, line6, line7;
         RainData? lastRainData = null;
+        string sunriseLocal = "--:--", sunsetLocal = "--:--";
+        DateTime lastSunCalcDate = DateTime.MinValue;
 
         while (true)
         {
+            var today = DateTime.Today;
+            if (today != lastSunCalcDate)
+            {
+                var (sunrise, sunset) = sunTimes.GetSunriseSunset(today);
+                sunriseLocal = sunrise.ToString("HH:mm");
+                sunsetLocal = sunset.ToString("HH:mm");
+                lastSunCalcDate = today;
+            }
+
             float tempC = 0f, humidity = 0f;
             try
             {
@@ -207,7 +219,7 @@ class Program {
             var (alertMessage, isRaining) = alertService.CheckWeather(
                 lastRainData, tempC, humidity, pressureHpa, lightRaw);
 
-            sensorData.Update(tempC, humidity, pressureHpa, pressureTempC, lastRainData, rainLevel, rainConfidence, alertMessage, isRaining);
+            sensorData.Update(tempC, humidity, pressureHpa, pressureTempC, lastRainData, rainLevel, rainConfidence, alertMessage, isRaining, sunriseLocal, sunsetLocal);
 
             var now = DateTime.Now;
             var timeText = now.ToString("HH:mm");

@@ -1,31 +1,15 @@
 using System;
 using System.IO.Ports;
-using System.Threading;
-using System.Threading.Tasks;
 
 public sealed class Sen0545 : IDisposable
 {
     private const byte FrameHeader = 0x3A;
     private const byte ReadFlag = 0x00;
     private const byte WriteFlag = 0x80;
-    private const byte CmdReadFirmware = 0x00;
     private const byte CmdRainfallStatus = 0x01;
     private const byte CmdSystemStatus = 0x02;
-    private const byte CmdOpticalCalibration = 0x03;
-    private const byte CmdRealtimeMode = 0x04;
-    private const byte CmdOutputFrequency = 0x05;
-    private const byte CmdThresholdV1 = 0x06;
-    private const byte CmdThresholdV2 = 0x07;
-    private const byte CmdThresholdV3 = 0x08;
-    private const byte CmdThresholdS1 = 0x09;
-    private const byte CmdThresholdS2 = 0x0A;
-    private const byte CmdThresholdS3 = 0x0B;
-    private const byte CmdThresholdN1 = 0x0C;
-    private const byte CmdThresholdN2 = 0x0D;
-    private const byte CmdThresholdN3 = 0x0E;
-    private const byte CmdAmbientLight = 0x0F;
     private const byte CmdChipTemperature = 0x10;
-    private const byte CmdSleepMode = 0x11;
+    private const byte CmdAmbientLight = 0x0F;
 
     private const byte Polynomial = 0x31;
     private const byte CrcInitial = 0xFF;
@@ -142,22 +126,11 @@ public sealed class Sen0545 : IDisposable
         lock (_lock)
         {
             FlushBuffer();
-            var cmd = BuildFrame(WriteFlag, CmdThresholdV1, v1, 0);
+            var cmd = BuildFrame(WriteFlag, 0x06, v1, 0);
             _serial.Write(cmd, 0, cmd.Length);
             ReadFrame();
 
-            cmd = BuildFrame(WriteFlag, CmdThresholdS1, s1, 0);
-            _serial.Write(cmd, 0, cmd.Length);
-            ReadFrame();
-        }
-    }
-
-    public void SetLowPowerMode(bool enable)
-    {
-        lock (_lock)
-        {
-            FlushBuffer();
-            var cmd = BuildFrame(WriteFlag, CmdSleepMode, (byte)(enable ? 1 : 0), 0);
+            cmd = BuildFrame(WriteFlag, 0x09, s1, 0);
             _serial.Write(cmd, 0, cmd.Length);
             ReadFrame();
         }
@@ -168,7 +141,7 @@ public sealed class Sen0545 : IDisposable
         lock (_lock)
         {
             FlushBuffer();
-            var cmd = BuildFrame(WriteFlag, CmdRealtimeMode, 1, 0);
+            var cmd = BuildFrame(WriteFlag, 0x04, 1, 0);
             _serial.Write(cmd, 0, cmd.Length);
             ReadFrame();
         }
@@ -179,7 +152,7 @@ public sealed class Sen0545 : IDisposable
         lock (_lock)
         {
             FlushBuffer();
-            var cmd = BuildFrame(WriteFlag, CmdRealtimeMode, 0, 0);
+            var cmd = BuildFrame(WriteFlag, 0x04, 0, 0);
             _serial.Write(cmd, 0, cmd.Length);
             ReadFrame();
         }
@@ -230,43 +203,53 @@ public sealed class Sen0545 : IDisposable
 
     private FrameResponse? ReadFrame()
     {
-        var headerIndex = 0;
         var headerBuf = new byte[1];
         var deadline = DateTime.Now.AddMilliseconds(_serial.ReadTimeout);
 
         while (DateTime.Now < deadline)
         {
             var bytesRead = _serial.Read(headerBuf, 0, 1);
-            if (bytesRead == 1)
+            if (bytesRead == 1 && headerBuf[0] == FrameHeader)
             {
-                if (headerBuf[0] == FrameHeader)
+                var data = new byte[5];
+                data[0] = FrameHeader;
+                var frameRead = 1;
+                var frameDeadline = DateTime.Now.AddMilliseconds(500);
+                while (frameRead < 5 && DateTime.Now < frameDeadline)
                 {
-                    var frame = new byte[4];
-                    var frameRead = 0;
-                    var frameDeadline = DateTime.Now.AddMilliseconds(500);
-                    while (frameRead < 4 && DateTime.Now < frameDeadline)
+                    var n = _serial.Read(data, frameRead, 5 - frameRead);
+                    if (n > 0) frameRead += n;
+                }
+                if (frameRead == 5)
+                {
+                    var crc = Crc8(data.AsSpan(0, 4));
+                    if (crc == data[4])
                     {
-                        var n = _serial.Read(frame, frameRead, 4 - frameRead);
-                        if (n > 0) frameRead += n;
+                        return new FrameResponse(data[1], data[2], data[3]);
                     }
-                    if (frameRead == 4)
-                    {
-                        var fcs = Crc8(frame.AsSpan(0, 4));
-                        if (fcs == frame[4])
-                        {
-                            return new FrameResponse(
-                                frame[0],
-                                frame[1],
-                                frame[2],
-                                frame[3]
-                            );
-                        }
-                    }
-                    return null;
+                    Console.WriteLine($"SEN0545 CRC mismatch: got 0x{data[4]:X2}, expected 0x{crc:X2}");
+                }
+                else
+                {
+                    Console.WriteLine($"SEN0545 short read: {frameRead}/5");
                 }
             }
         }
         return null;
+    }
+
+    private record FrameResponse(byte Flag, byte DataLo, byte DataHi);
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        lock (_lock)
+        {
+            if (_serial.IsOpen)
+                _serial.Close();
+            _serial.Dispose();
+        }
     }
 
     private static byte Crc8(ReadOnlySpan<byte> data)
@@ -285,22 +268,6 @@ public sealed class Sen0545 : IDisposable
         }
         return (byte)(crc ^ CrcXor);
     }
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-        lock (_lock)
-        {
-            if (_serial.IsOpen)
-                _serial.Close();
-            _serial.Dispose();
-        }
-    }
-
-    private record FrameResponse(byte Flag, byte DataLo, byte DataHi, byte Fcs);
-
-    public static byte[] ComputeCrc(byte[] data) => new[] { Crc8(data.AsSpan(0, data.Length)) };
 }
 
 public enum RainLevel
