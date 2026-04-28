@@ -433,7 +433,7 @@
     }
   }
   
-  // Function to send email notification
+  // Send rain event to backend for Telegram alerts
   function sendEmailNotification(rainStatus, confidence, temperature, humidity) {
     const subject = rainStatus === 'start' ? '🌧️ RAIN STARTED at your weather station' : '☀️ RAIN STOPPED at your weather station';
     const body = rainStatus === 'start' 
