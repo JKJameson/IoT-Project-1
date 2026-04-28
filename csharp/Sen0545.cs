@@ -34,6 +34,8 @@ public sealed class Sen0545 : IDisposable
             WriteTimeout = 1000
         };
         _serial.Open();
+
+        EnterRealtimeMode();
     }
 
     public bool IsOpen => _serial.IsOpen;
