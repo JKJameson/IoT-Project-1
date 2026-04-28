@@ -62,11 +62,14 @@ public sealed class WebServer : IDisposable
                 case "/api/test-telegram":
                     await HandleTestTelegram(ctx);
                     break;
-                case "/api/send-rain-alert":
-                    await HandleSendRainAlert(ctx);
-                    break;
                 case "/api/temperature-history":
                     await HandleTempHistory(ctx);
+                    break;
+                case "/api/alerts-state":
+                    await HandleAlertsState(ctx);
+                    break;
+                case "/api/alerts-toggle":
+                    await HandleAlertsToggle(ctx);
                     break;
                 case "/":
                     await HandleFile(ctx, _htmlPath, "text/html");
@@ -121,76 +124,12 @@ public sealed class WebServer : IDisposable
         ctx.Response.Close();
     }
 
-    private sealed class RainAlertRequest
-    {
-        public string Status { get; set; } = "";
-        public int Confidence { get; set; }
-        public float? Temperature { get; set; }
-        public float? Humidity { get; set; }
-    }
-
-    private async Task HandleSendRainAlert(HttpListenerContext ctx)
-    {
-        ctx.Response.ContentType = "application/json";
-        ctx.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-
-        if (_alertService == null)
-        {
-            ctx.Response.StatusCode = 503;
-            var unavailable = JsonSerializer.Serialize(new { ok = false, error = "Alert service not available" });
-            var unavailableBuf = System.Text.Encoding.UTF8.GetBytes(unavailable);
-            await ctx.Response.OutputStream.WriteAsync(unavailableBuf);
-            ctx.Response.Close();
-            return;
-        }
-
-        if (ctx.Request.HttpMethod != "POST")
-        {
-            ctx.Response.StatusCode = 405;
-            var methodErr = JsonSerializer.Serialize(new { ok = false, error = "Use POST" });
-            var methodErrBuf = System.Text.Encoding.UTF8.GetBytes(methodErr);
-            await ctx.Response.OutputStream.WriteAsync(methodErrBuf);
-            ctx.Response.Close();
-            return;
-        }
-
-        string body;
-        using (var reader = new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding))
-            body = await reader.ReadToEndAsync();
-
-        RainAlertRequest? payload = null;
-        try { payload = JsonSerializer.Deserialize<RainAlertRequest>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }); }
-        catch { }
-
-        if (payload == null || (payload.Status != "start" && payload.Status != "stop"))
-        {
-            ctx.Response.StatusCode = 400;
-            var badReq = JsonSerializer.Serialize(new { ok = false, error = "Invalid payload. status must be 'start' or 'stop'." });
-            var badReqBuf = System.Text.Encoding.UTF8.GetBytes(badReq);
-            await ctx.Response.OutputStream.WriteAsync(badReqBuf);
-            ctx.Response.Close();
-            return;
-        }
-
-        bool sent = _alertService.SendRainEventTelegram(payload.Status, payload.Confidence, payload.Temperature, payload.Humidity);
-        var response = JsonSerializer.Serialize(new { ok = sent });
-        var buf = System.Text.Encoding.UTF8.GetBytes(response);
-        await ctx.Response.OutputStream.WriteAsync(buf);
-        ctx.Response.Close();
-    }
-
     private async Task HandleTempHistory(HttpListenerContext ctx)
     {
-        var history = _data.GetTemperatureHistory(168); // 7 days
-        var json = JsonSerializer.Serialize(history, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = false,
-        });
-
-        ctx.Response.ContentType = "application/json";
-        ctx.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+        var history = _data.GetTemperatureHistory();
+        var json = JsonSerializer.Serialize(history, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
         var buf = System.Text.Encoding.UTF8.GetBytes(json);
+        ctx.Response.ContentType = "application/json";
         await ctx.Response.OutputStream.WriteAsync(buf);
         ctx.Response.Close();
     }
@@ -200,17 +139,57 @@ public sealed class WebServer : IDisposable
         if (!File.Exists(path))
         {
             ctx.Response.StatusCode = 404;
-            var msg = System.Text.Encoding.UTF8.GetBytes("File not found: " + path);
-            await ctx.Response.OutputStream.WriteAsync(msg);
             ctx.Response.Close();
             return;
         }
-
         var bytes = await File.ReadAllBytesAsync(path);
         ctx.Response.ContentType = contentType;
         await ctx.Response.OutputStream.WriteAsync(bytes);
         ctx.Response.Close();
     }
+
+    private async Task HandleAlertsState(HttpListenerContext ctx)
+    {
+        var state = new { enabled = _alertService?.AlertsEnabled ?? false };
+        var json = JsonSerializer.Serialize(state);
+        var buf = System.Text.Encoding.UTF8.GetBytes(json);
+        ctx.Response.ContentType = "application/json";
+        await ctx.Response.OutputStream.WriteAsync(buf);
+        ctx.Response.Close();
+    }
+
+    private async Task HandleAlertsToggle(HttpListenerContext ctx)
+    {
+        if (_alertService == null)
+        {
+            ctx.Response.StatusCode = 503;
+            ctx.Response.Close();
+            return;
+        }
+        if (ctx.Request.HttpMethod != "POST")
+        {
+            ctx.Response.StatusCode = 405;
+            ctx.Response.Close();
+            return;
+        }
+        using var reader = new StreamReader(ctx.Request.InputStream);
+        var body = await reader.ReadToEndAsync();
+        try
+        {
+            var req = JsonSerializer.Deserialize<AlertsToggleRequest>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (req != null)
+                _alertService.AlertsEnabled = req.Enabled;
+        }
+        catch { }
+        var state = new { enabled = _alertService.AlertsEnabled };
+        var json = JsonSerializer.Serialize(state);
+        var buf = System.Text.Encoding.UTF8.GetBytes(json);
+        ctx.Response.ContentType = "application/json";
+        await ctx.Response.OutputStream.WriteAsync(buf);
+        ctx.Response.Close();
+    }
+
+    private record AlertsToggleRequest(bool Enabled);
 
     public void Dispose()
     {

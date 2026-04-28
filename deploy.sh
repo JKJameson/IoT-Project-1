@@ -26,16 +26,23 @@ gcc -shared -fPIC -O2 -DUSE_LGPIO_LIB -DRPI \
 BUILD
 
 echo "==> Publishing C# app for linux-arm64 ..."
+rm -rf "${LOCAL_CSHARP}/bin/pi"
 dotnet publish "${LOCAL_CSHARP}/EpdApp.csproj" \
   -r linux-arm64 --self-contained -c Release \
   -o "${LOCAL_CSHARP}/bin/pi" \
   -p:PublishSingleFile=true \
   --nologo -v quiet
 
-echo "==> Deploying binary to Pi ..."
+if [ ! -f "${LOCAL_CSHARP}/bin/pi/libSystem.IO.Ports.Native.so" ]; then
+  echo "ERROR: libSystem.IO.Ports.Native.so not found after publish"
+  exit 1
+fi
+
+echo "==> Deploying binary and native libs to Pi ..."
 ssh "$PI" "sudo systemctl stop epdapp.service 2>/dev/null || true"
 scp "${LOCAL_CSHARP}/bin/pi/EpdApp" "${PI}:${REMOTE}/csharp/EpdApp.tmp"
 ssh "$PI" "mv -f ${REMOTE}/csharp/EpdApp.tmp ${REMOTE}/csharp/EpdApp"
+scp "${LOCAL_CSHARP}/bin/pi/libSystem.IO.Ports.Native.so" "${PI}:${REMOTE}/csharp/libSystem.IO.Ports.Native.so"
 ssh "$PI" "chmod +x ${REMOTE}/csharp/EpdApp"
 
 echo "==> Deploying web files to Pi ..."

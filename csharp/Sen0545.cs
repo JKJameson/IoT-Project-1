@@ -7,9 +7,6 @@ public sealed class Sen0545 : IDisposable
     private const byte ReadFlag = 0x00;
     private const byte WriteFlag = 0x80;
     private const byte CmdRainfallStatus = 0x01;
-    private const byte CmdSystemStatus = 0x02;
-    private const byte CmdChipTemperature = 0x10;
-    private const byte CmdAmbientLight = 0x0F;
 
     private const byte Polynomial = 0x31;
     private const byte CrcInitial = 0xFF;
@@ -17,6 +14,9 @@ public sealed class Sen0545 : IDisposable
 
     private readonly SerialPort _serial;
     private readonly object _lock = new();
+    private RainLevel _heldLevel = RainLevel.Clear;
+    private DateTime _lastRainUtc = DateTime.MinValue;
+    private static readonly TimeSpan RainHoldDuration = TimeSpan.FromSeconds(30);
     private bool _disposed;
 
     public Sen0545(string? port = null, int baudRate = 115200)
@@ -34,8 +34,31 @@ public sealed class Sen0545 : IDisposable
             WriteTimeout = 1000
         };
         _serial.Open();
+        Console.WriteLine($"SEN0545: Opened on {port}");
 
-        EnterRealtimeMode();
+        try
+        {
+            FlushBuffer();
+            var exitCmd = BuildFrame(WriteFlag, 0x04, 0, 0);
+            _serial.Write(exitCmd, 0, exitCmd.Length);
+            Thread.Sleep(200);
+            ReadFrame();
+            FlushBuffer();
+        }
+        catch { }
+    }
+
+    public static string? GetDefaultPort()
+    {
+        string? envPort = Environment.GetEnvironmentVariable("SEN0545_PORT");
+        if (!string.IsNullOrEmpty(envPort))
+            return envPort;
+        string? autoPort = FindPort();
+        if (autoPort != null)
+            return autoPort;
+        if (File.Exists("/dev/serial0")) return "/dev/serial0";
+        if (File.Exists("/dev/ttyS0")) return "/dev/ttyS0";
+        return null;
     }
 
     public bool IsOpen => _serial.IsOpen;
@@ -43,6 +66,7 @@ public sealed class Sen0545 : IDisposable
     private static string? FindPort()
     {
         var ports = SerialPort.GetPortNames();
+        Console.WriteLine($"SEN0545: Available ports: {string.Join(", ", ports)}");
         foreach (var p in ports)
         {
             try
@@ -72,117 +96,43 @@ public sealed class Sen0545 : IDisposable
         return null;
     }
 
-    public RainData Read()
+    public RainData? TryRead()
     {
         lock (_lock)
         {
             FlushBuffer();
             var cmd = BuildFrame(ReadFlag, CmdRainfallStatus, 0, 0);
             _serial.Write(cmd, 0, cmd.Length);
+            Thread.Sleep(100);
             var response = ReadFrame();
-            if (response == null || response.Flag != (WriteFlag | CmdRainfallStatus))
-                throw new InvalidOperationException("Invalid rain status response");
 
-            var level = response.DataLo switch
+            if (response == null || response.Flag != (WriteFlag | CmdRainfallStatus))
+                return null;
+
+            var rawLevel = response.DataLo switch
             {
-                0 => RainLevel.NoRain,
-                1 => RainLevel.Light,
-                2 => RainLevel.Moderate,
-                3 => RainLevel.Heavy,
+                0x00 => RainLevel.Clear,
+                0x01 => RainLevel.Light,
+                0x02 => RainLevel.Moderate,
+                0x03 => RainLevel.Heavy,
                 _ => RainLevel.Unknown
             };
 
-            FlushBuffer();
+            var now = DateTime.UtcNow;
+            var level = rawLevel;
 
-            var tempCmd = BuildFrame(ReadFlag, CmdChipTemperature, 0, 0);
-            _serial.Write(tempCmd, 0, tempCmd.Length);
-            var tempResponse = ReadFrame();
-            var tempC = -40f;
-            if (tempResponse != null && tempResponse.Flag == (WriteFlag | CmdChipTemperature))
+            if (rawLevel != RainLevel.Clear && rawLevel != RainLevel.Unknown)
             {
-                tempC = TempFromRaw(tempResponse.DataLo);
+                _heldLevel = rawLevel;
+                _lastRainUtc = now;
+            }
+            else if (rawLevel == RainLevel.Clear && now - _lastRainUtc < RainHoldDuration)
+            {
+                level = _heldLevel;
             }
 
-            FlushBuffer();
-
-            var lightCmd = BuildFrame(ReadFlag, CmdAmbientLight, 0, 0);
-            _serial.Write(lightCmd, 0, lightCmd.Length);
-            var lightResponse = ReadFrame();
-            var lightLux = 0;
-            if (lightResponse != null && lightResponse.Flag == (WriteFlag | CmdAmbientLight))
-            {
-                lightLux = lightResponse.DataLo | (lightResponse.DataHi << 8);
-            }
-
-            return new RainData(level, tempC, lightLux, DateTime.Now);
-        }
-    }
-
-    private static float TempFromRaw(byte raw)
-    {
-        return raw * 5f - 40f;
-    }
-
-    public void SetSensitivity(byte v1, byte s1)
-    {
-        lock (_lock)
-        {
-            FlushBuffer();
-            var cmd = BuildFrame(WriteFlag, 0x06, v1, 0);
-            _serial.Write(cmd, 0, cmd.Length);
-            ReadFrame();
-
-            cmd = BuildFrame(WriteFlag, 0x09, s1, 0);
-            _serial.Write(cmd, 0, cmd.Length);
-            ReadFrame();
-        }
-    }
-
-    public void EnterRealtimeMode()
-    {
-        lock (_lock)
-        {
-            FlushBuffer();
-            var cmd = BuildFrame(WriteFlag, 0x04, 1, 0);
-            _serial.Write(cmd, 0, cmd.Length);
-            ReadFrame();
-        }
-    }
-
-    public void ExitRealtimeMode()
-    {
-        lock (_lock)
-        {
-            FlushBuffer();
-            var cmd = BuildFrame(WriteFlag, 0x04, 0, 0);
-            _serial.Write(cmd, 0, cmd.Length);
-            ReadFrame();
-        }
-    }
-
-    public SystemStatus ReadSystemStatus()
-    {
-        lock (_lock)
-        {
-            FlushBuffer();
-            var cmd = BuildFrame(ReadFlag, CmdSystemStatus, 0, 0);
-            _serial.Write(cmd, 0, cmd.Length);
-            var response = ReadFrame();
-            if (response == null || response.Flag != (WriteFlag | CmdSystemStatus))
-                return SystemStatus.Unknown;
-
-            return response.DataLo switch
-            {
-                0 => SystemStatus.Normal,
-                1 => SystemStatus.InternalCommError,
-                2 => SystemStatus.LedaDamaged,
-                3 => SystemStatus.LedbDamaged,
-                4 => SystemStatus.CalibrationNotGood,
-                5 => SystemStatus.ParamWriteFailure,
-                6 => SystemStatus.SerialCheckError,
-                7 => SystemStatus.LowVoltage,
-                _ => SystemStatus.Unknown
-            };
+            Console.WriteLine($"SEN0545 level={level}");
+            return new RainData(level, response.DataLo, DateTime.Now);
         }
     }
 
@@ -199,7 +149,7 @@ public sealed class Sen0545 : IDisposable
         frame[1] = (byte)(flag | dataNumber);
         frame[2] = dataLo;
         frame[3] = dataHi;
-        frame[4] = Crc8(frame.AsSpan(0, 4));
+        frame[4] = Crc8(frame.AsSpan(1, 3));
         return frame;
     }
 
@@ -224,7 +174,7 @@ public sealed class Sen0545 : IDisposable
                 }
                 if (frameRead == 5)
                 {
-                    var crc = Crc8(data.AsSpan(0, 4));
+                    var crc = Crc8(data.AsSpan(1, 3));
                     if (crc == data[4])
                     {
                         return new FrameResponse(data[1], data[2], data[3]);
@@ -274,29 +224,15 @@ public sealed class Sen0545 : IDisposable
 
 public enum RainLevel
 {
-    NoRain = 0,
+    Clear = 0,
     Light = 1,
     Moderate = 2,
     Heavy = 3,
     Unknown = -1
 }
 
-public enum SystemStatus
-{
-    Normal = 0,
-    InternalCommError = 1,
-    LedaDamaged = 2,
-    LedbDamaged = 3,
-    CalibrationNotGood = 4,
-    ParamWriteFailure = 5,
-    SerialCheckError = 6,
-    LowVoltage = 7,
-    Unknown = -1
-}
-
 public record RainData(
     RainLevel Level,
-    float TemperatureC,
-    int LightLux,
+    int RawValue,
     DateTime Timestamp
 );

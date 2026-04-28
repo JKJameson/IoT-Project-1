@@ -4,11 +4,10 @@ class Program {
     static void Main() {
         Console.WriteLine("Initialising display...");
         using var display = new Epd();
-        var lightSensor = new LightSensor();
         var sunTimes = new SunTimesCalculator();
 
-        string emailTo = Environment.GetEnvironmentVariable("ALERT_EMAIL") ?? "your-email@gmail.com";
-        var alertService = new AlertService(emailTo);
+        var alertService = new AlertService();
+        alertService.LoadAlertsState();
 
         string dataDir = Path.Combine(AppContext.BaseDirectory, "data");
         var sensorData = new SensorData(dataDir);
@@ -21,7 +20,7 @@ class Program {
         const ushort sensorStartY = 30, rowH = 16;
 
         display.Fill(WHITE);
-        display.DrawIcon(4, 4, Icons.Bell, Icons.BellW, Icons.BellH);
+        display.DrawIcon(4, 4, alertService.AlertsEnabled ? Icons.Bell : Icons.BellOff, Icons.BellW, Icons.BellH);
         display.DrawText(24, 6, "Startup", Font.F16, BLACK, WHITE);
 
         var ip = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
@@ -33,7 +32,7 @@ class Program {
         if (ip != null)
             display.DrawText(24, 24, $"http://{ip.Address}", Font.F12, BLACK, WHITE);
 
-        string[] sensors = ["E-Paper Display", "DHT11 Temp/Humidity", "BMP280 Pressure", "Light Sensor"];
+        string[] sensors = ["E-Paper Display", "DHT11 Temp/Humidity", "BMP280 Pressure", "Sunrise/Sunset"];
         for (int i = 0; i < sensors.Length; i++)
             display.DrawText(lblX, (ushort)(sensorStartY + i * rowH), sensors[i], Font.F12, BLACK, WHITE);
 
@@ -59,43 +58,34 @@ class Program {
         display.DisplayPartial();
         Console.WriteLine($"BMP280: {(bmpOk ? "OK" : "FAIL")}");
 
-        bool lightOk = false;
-        try
-        {
-            if (lightSensor.IsAvailable)
-            {
-                _ = lightSensor.Read();
-                lightOk = true;
-            }
-        }
-        catch (Exception e) { Console.Error.WriteLine($"LIGHT: {e.Message}"); }
-        display.DrawIcon(chkX, (ushort)(sensorStartY + rowH * 3), lightOk ? Icons.Check : Icons.Cross,
-                         (ushort)(lightOk ? Icons.CheckW : Icons.CrossW),
-                         (ushort)(lightOk ? Icons.CheckH : Icons.CrossH));
-        display.DisplayPartial();
-        Console.WriteLine($"LIGHT: {(lightOk ? "OK" : "FAIL")}");
-
         Sen0545? rainSensor = null;
         try
         {
-            var rainPort = Environment.GetEnvironmentVariable("SEN0545_PORT");
-            if (!string.IsNullOrEmpty(rainPort))
+            var rainPort = Sen0545.GetDefaultPort();
+            if (rainPort != null)
             {
                 rainSensor = new Sen0545(rainPort);
-                var rd = rainSensor.Read();
-                Console.WriteLine($"SEN0545: OK (Rain: {rd.Level}, Temp: {rd.TemperatureC}C, Light: {rd.LightLux})");
+                var rd = rainSensor.TryRead();
+                if (rd != null)
+                    Console.WriteLine($"SEN0545: OK (Rain: {rd.Level})");
+                else
+                    Console.WriteLine("SEN0545: No data");
             }
             else
             {
-                Console.WriteLine("SEN0545: Not configured (set SEN0545_PORT env var)");
+                Console.WriteLine("SEN0545: Not found");
             }
         }
         catch (Exception e) { Console.Error.WriteLine($"SEN0545: {e.Message}"); }
 
+        display.DrawIcon(chkX, (ushort)(sensorStartY + rowH * 3), Icons.Check, Icons.CheckW, Icons.CheckH);
+        display.DisplayPartial();
+        Console.WriteLine("SUN: OK");
+
         Thread.Sleep(1500);
 
         display.Fill(WHITE);
-        display.DrawIcon(4, 4, Icons.Bell, Icons.BellW, Icons.BellH);
+        display.DrawIcon(4, 4, alertService.AlertsEnabled ? Icons.Bell : Icons.BellOff, Icons.BellW, Icons.BellH);
         display.DrawText(24, 6, "", Font.F16, BLACK, WHITE);
         display.DisplayBase();
 
@@ -163,48 +153,21 @@ class Program {
                 line6 = "-- pressure error --";
             }
 
-            int? lightRaw = null;
-            string lightCondition = "N/A";
-            try
-            {
-                if (lightSensor.IsAvailable)
-                {
-                    var lr = lightSensor.Read();
-                    lightRaw = lr.RawValue;
-                    lightCondition = lr.Condition;
-                }
-                else
-                {
-                    lightCondition = "Unavailable";
-                }
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine($"LIGHT: {e.Message}");
-                lightCondition = "Error";
-            }
-
-            line5 = lightRaw.HasValue
-                ? $"Light: {lightCondition} ({lightRaw.Value})"
-                : $"Light: {lightCondition}";
+            line5 = $"Sun: {sunriseLocal} / {sunsetLocal}";
 
             string rainLevel = "--";
-            int rainConfidence = 0;
+            line7 = $"Rain: --";
             if (rainSensor != null)
             {
                 try
                 {
-                    lastRainData = rainSensor.Read();
-                    rainLevel = lastRainData.Level.ToString();
-                    rainConfidence = lastRainData.Level switch
+                    lastRainData = rainSensor.TryRead();
+                    if (lastRainData != null)
                     {
-                        RainLevel.Heavy => 90,
-                        RainLevel.Moderate => 70,
-                        RainLevel.Light => 40,
-                        RainLevel.NoRain => 0,
-                        _ => 0
-                    };
-                    Console.WriteLine($"SEN0545: {lastRainData.Level} | {lastRainData.TemperatureC}C | {lastRainData.LightLux} lux");
+                        rainLevel = lastRainData.Level.ToString();
+                        line7 = $"Rain: {lastRainData.Level} (raw={lastRainData.RawValue})";
+                        Console.WriteLine($"SEN0545: {lastRainData.Level}");
+                    }
                 }
                 catch (Exception e)
                 {
@@ -214,12 +177,9 @@ class Program {
                 }
             }
 
-            line7 = $"Rain: {rainLevel}";
+            var (alertMessage, isRaining) = alertService.CheckWeather(lastRainData);
 
-            var (alertMessage, isRaining) = alertService.CheckWeather(
-                lastRainData, tempC, humidity, pressureHpa, lightRaw);
-
-            sensorData.Update(tempC, humidity, pressureHpa, pressureTempC, lastRainData, rainLevel, rainConfidence, alertMessage, isRaining, sunriseLocal, sunsetLocal);
+            sensorData.Update(tempC, humidity, pressureHpa, pressureTempC, lastRainData, rainLevel, alertMessage, isRaining, sunriseLocal, sunsetLocal);
 
             var now = DateTime.Now;
             var timeText = now.ToString("HH:mm");
