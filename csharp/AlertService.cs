@@ -69,6 +69,13 @@ public sealed class AlertService
             {
                 _isRaining = true;
                 message = $"🌧️ Rain started ({rainData?.Level}) - {DateTime.Now:HH:mm:ss}";
+
+                if (_alertsEnabled && ShouldNotify("start"))
+                {
+                    _lastNotificationTime = DateTime.Now;
+                    _lastNotificationType = "start";
+                    SendTelegramAsync($"🌧️ RAIN STARTED ({rainData?.Level})").Wait();
+                }
             }
             else if (!isNowRaining && wasRaining)
             {
@@ -142,3 +149,5 @@ public sealed class AlertService
         return SendTelegramAsync("🧪 Weather Nest: Test message from your weather station!").Result;
     }
 }
+
+

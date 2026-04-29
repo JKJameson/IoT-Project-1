@@ -20,17 +20,8 @@ class Program {
         const ushort sensorStartY = 30, rowH = 16;
 
         display.Fill(WHITE);
-        display.DrawIcon(4, 4, alertService.AlertsEnabled ? Icons.Bell : Icons.BellOff, Icons.BellW, Icons.BellH);
+        display.DrawIcon(4, 4, alertService.AlertsEnabled ? Icons.BellBold : Icons.BellOff, Icons.BellW, Icons.BellH);
         display.DrawText(24, 6, "Startup", Font.F16, BLACK, WHITE);
-
-        var ip = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
-            .Where(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up
-                        && n.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Wireless80211
-                        && n.GetIPProperties().UnicastAddresses.Any(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork))
-            .SelectMany(n => n.GetIPProperties().UnicastAddresses)
-            .FirstOrDefault(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
-        if (ip != null)
-            display.DrawText(24, 24, $"http://{ip.Address}", Font.F12, BLACK, WHITE);
 
         string[] sensors = ["E-Paper Display", "DHT11 Temp/Humidity", "BMP280 Pressure", "Sunrise/Sunset"];
         for (int i = 0; i < sensors.Length; i++)
@@ -85,13 +76,13 @@ class Program {
         Thread.Sleep(1500);
 
         display.Fill(WHITE);
-        display.DrawIcon(4, 4, alertService.AlertsEnabled ? Icons.Bell : Icons.BellOff, Icons.BellW, Icons.BellH);
+        display.DrawIcon(4, 4, alertService.AlertsEnabled ? Icons.BellBold : Icons.BellOff, Icons.BellW, Icons.BellH);
         display.DrawText(24, 6, "", Font.F16, BLACK, WHITE);
         display.DisplayBase();
 
         const ushort iconX = 0, textX = 20;
         const ushort timeX = 24, timeY = 6;
-        const ushort dateY = 8;
+        const ushort dateY = 6;
         const ushort headerRightEdgeX = 244;
         const ushort line3Y = 40;
         const ushort line4Y = 56;
@@ -184,12 +175,16 @@ class Program {
             var now = DateTime.Now;
             var timeText = now.ToString("HH:mm");
             var dateText = now.ToString("ddd, dd MMM");
-            int dateXInt = headerRightEdgeX - (dateText.Length * 7);
+            int dateXInt = headerRightEdgeX - (dateText.Length * 9);
             ushort dateX = (ushort)Math.Max(timeX + 52, dateXInt);
+
+            display.ClearWindow(4, 4, 4 + Icons.BellW, 4 + Icons.BellH, WHITE);
+            display.DrawIcon(4, 4, alertService.AlertsEnabled ? Icons.BellBold : Icons.BellOff, Icons.BellW, Icons.BellH);
 
             display.ClearWindow(timeX, timeY, timeX + screenW, timeY + 16, WHITE);
             display.DrawText(timeX, timeY, timeText, Font.F16, BLACK, WHITE);
-            display.DrawText(dateX, dateY, dateText, Font.F12, BLACK, WHITE);
+            display.DrawText(dateX, dateY, dateText, Font.F16, BLACK, WHITE);
+            display.DrawText((ushort)(dateX + 1), dateY, dateText, Font.F16, BLACK, WHITE);
 
             display.ClearWindow(iconX, line3Y, iconX + screenW, line3Y + screenH, WHITE);
             display.DrawIcon(iconX, line3Y, Icons.Thermo, Icons.ThermoW, Icons.ThermoH);
