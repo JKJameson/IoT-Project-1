@@ -82,7 +82,7 @@ class Program {
 
         const ushort iconX = 0, textX = 20;
         const ushort timeX = 24, timeY = 6;
-        const ushort dateY = 6;
+        const ushort dateY = 8;
         const ushort headerRightEdgeX = 244;
         const ushort line3Y = 40;
         const ushort line4Y = 56;
@@ -175,7 +175,7 @@ class Program {
             var now = DateTime.Now;
             var timeText = now.ToString("HH:mm");
             var dateText = now.ToString("ddd, dd MMM");
-            int dateXInt = headerRightEdgeX - (dateText.Length * 9);
+            int dateXInt = headerRightEdgeX - (dateText.Length * 7);
             ushort dateX = (ushort)Math.Max(timeX + 52, dateXInt);
 
             display.ClearWindow(4, 4, 4 + Icons.BellW, 4 + Icons.BellH, WHITE);
@@ -183,8 +183,8 @@ class Program {
 
             display.ClearWindow(timeX, timeY, timeX + screenW, timeY + 16, WHITE);
             display.DrawText(timeX, timeY, timeText, Font.F16, BLACK, WHITE);
-            display.DrawText(dateX, dateY, dateText, Font.F16, BLACK, WHITE);
-            display.DrawText((ushort)(dateX + 1), dateY, dateText, Font.F16, BLACK, WHITE);
+            display.DrawText(dateX, dateY, dateText, Font.F12, BLACK, WHITE);
+            display.DrawText((ushort)(dateX + 1), dateY, dateText, Font.F12, BLACK, WHITE);
 
             display.ClearWindow(iconX, line3Y, iconX + screenW, line3Y + screenH, WHITE);
             display.DrawIcon(iconX, line3Y, Icons.Thermo, Icons.ThermoW, Icons.ThermoH);
